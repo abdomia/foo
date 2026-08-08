@@ -15,6 +15,13 @@ export const signupSchema = z.object({
   grade: z.string().trim().max(60).optional(),
 });
 
+export const parentSignupSchema = z.object({
+  name: z.string().trim().min(2, 'الاسم قصير جداً').max(100),
+  email: z.string().trim().email('بريد إلكتروني غير صالح').toLowerCase(),
+  password: z.string().min(6, 'كلمة المرور يجب أن تكون 6 أحرف على الأقل').max(128),
+  phone: z.string().trim().regex(/^[0-9+\s-]{10,15}$/, 'رقم الهاتف غير صالح'),
+});
+
 export const activateCodeSchema = z.object({
   code: z.string().trim().min(4).max(20).toUpperCase(),
 });

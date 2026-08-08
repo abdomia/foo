@@ -213,3 +213,46 @@ input:focus, textarea:focus, select:focus {
 .animate-progress {
   animation: progressFill 0.6s ease-out forwards;
 }
+
+@media print {
+  aside,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111 !important;
+  }
+
+  .report-print,
+  .report-print * {
+    color: #111 !important;
+  }
+
+  .report-print .text-text-secondary,
+  .report-print .text-text-muted {
+    color: #555 !important;
+  }
+
+  .report-print .bg-surface-card,
+  .report-print .bg-muted,
+  .report-print .bg-muted\/40 {
+    background: #f5f5f5 !important;
+    border-color: #ddd !important;
+  }
+
+  .report-print .border,
+  .report-print .border-border {
+    border-color: #ddd !important;
+  }
+
+  .report-print .print-hide-row {
+    background: #fafafa !important;
+  }
+}

@@ -14,6 +14,7 @@ interface User {
   subscriptionPlan?: 'monthly' | 'yearly' | 'semester';
   subscriptionExpiry?: string;
   isAdmin?: boolean;
+  role?: string;
   createdAt?: string;
 }
 

@@ -19,6 +19,7 @@ export type SafeUser = {
   subscriptionPlan?: string;
   subscriptionExpiry?: string;
   isAdmin: boolean;
+  role: string;
   createdAt: string;
 };
 
@@ -35,6 +36,7 @@ export function sanitizeUser(user: PrismaUser): SafeUser {
     subscriptionPlan: user.subscriptionPlan || undefined,
     subscriptionExpiry: user.subscriptionExpiry?.toISOString() || undefined,
     isAdmin: user.isAdmin,
+    role: user.role,
     createdAt: user.createdAt.toISOString(),
   };
 }

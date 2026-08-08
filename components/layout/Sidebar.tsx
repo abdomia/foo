@@ -28,6 +28,8 @@ import {
   Star,
   Bell,
   Award,
+  Users,
+  Activity,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -41,9 +43,15 @@ const navItems = [
   { href: '/search', label: 'البحث', icon: Search },
   { href: '/favorites', label: 'المفضلة', icon: Star },
   { href: '/certificates', label: 'شهاداتي', icon: Award },
+  { href: '/report', label: 'تقريري', icon: Activity },
   { href: '/path', label: 'خطتي', icon: Map },
   { href: '/progress', label: 'تطويري', icon: TrendingUp },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
+];
+
+const parentNavItems = [
+  { href: '/', label: 'الرئيسية', icon: Home },
+  { href: '/parent', label: 'لوحة ولي الأمر', icon: Users },
 ];
 
 export function Sidebar() {
@@ -105,7 +113,7 @@ export function Sidebar() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-surface rounded-lg shadow-md"
+        className="no-print lg:hidden fixed top-4 left-4 z-50 p-2 bg-surface rounded-lg shadow-md"
       >
         <Menu className="w-6 h-6 text-text-primary" />
       </button>
@@ -149,7 +157,7 @@ export function Sidebar() {
 
             <nav className="flex-1 p-4">
               <ul className="space-y-2">
-              {navItems.map((item) => {
+              {(user?.role === 'parent' ? parentNavItems : navItems).map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <li key={item.href}>

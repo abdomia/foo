@@ -16,6 +16,7 @@ function toSafeUser(user: PrismaUser) {
     subscriptionPlan: user.subscriptionPlan || undefined,
     subscriptionExpiry: user.subscriptionExpiry?.toISOString() || undefined,
     isAdmin: user.isAdmin,
+    role: user.role,
     createdAt: user.createdAt.toISOString(),
   };
 }

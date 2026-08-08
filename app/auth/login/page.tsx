@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthProvider';
@@ -10,33 +10,31 @@ import Image from 'next/image';
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const OAUTH_ERROR_MESSAGES: Record<string, string> = {
+  oauth_not_configured: 'Google OAuth غير مكون - تحقق من الإعدادات',
+  oauth_failed: 'فشل تسجيل الدخول مع Google - قد تكون الحساب غير موثق',
+  token_failed: 'فشل التوكن - الحساب يتطلب تدقيق Google',
+  no_email: 'لم يتم الوصول للبريد الإلكتروني',
+  no_code: 'كود غير صالح',
+  access_denied: 'تم رفض الوصول',
+  invalid_request: 'طلب غير صالح',
+};
+
+function oauthErrorFromUrl(): string {
+  if (typeof window === 'undefined') return '';
+  const error = new URLSearchParams(window.location.search).get('error');
+  if (!error) return '';
+  return OAUTH_ERROR_MESSAGES[error] || 'خطأ: ' + error;
+}
+
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoading, user } = useAuth();
+  const { login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(oauthErrorFromUrl);
   const [rememberMe, setRememberMe] = useState(false);
-
-  useEffect(() => {
-
-    // Check for OAuth error in URL
-    const params = new URLSearchParams(window.location.search);
-    const error = params.get('error');
-    if (error) {
-      const errorMessages: Record<string, string> = {
-        oauth_not_configured: 'Google OAuth غير مكون - تحقق من الإعدادات',
-        oauth_failed: 'فشل تسجيل الدخول مع Google - قد تكون الحساب غير موثق',
-        token_failed: 'فشل التوكن - الحساب يتطلب تدقيق Google',
-        no_email: 'لم يتم الوصول للبريد الإلكتروني',
-        no_code: 'كود غير صالح',
-        access_denied: 'تم رفض الوصول',
-        invalid_request: 'طلب غير صالح',
-      };
-      setError(errorMessages[error] || 'خطأ: ' + error);
-    }
-  }, [user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +46,8 @@ export default function LoginPage() {
       const redirect = params.get('redirect');
       if (result.user?.isAdmin) {
         router.push('/admin');
+      } else if (result.user?.role === 'parent') {
+        router.push('/parent');
       } else if (redirect) {
         router.push(redirect);
       } else {
@@ -173,6 +173,10 @@ export default function LoginPage() {
                 ليس لديك حساب؟{' '}
                 <Link href="/auth/signup" className="text-primary font-medium hover:underline">
                   إنشاء حساب جديد
+                </Link>
+                {' أو '}
+                <Link href="/auth/parent" className="text-primary font-medium hover:underline">
+                  حساب ولي أمر
                 </Link>
               </p>
             </div>
