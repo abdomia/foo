@@ -23,7 +23,6 @@ import {
   User,
   FileText,
   Lightbulb,
-  Map,
   Search,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -37,7 +36,6 @@ const navItems = [
   { href: '/pdfs', label: 'PDFs', icon: FileText },
   { href: '/quizzes', label: 'الاختبارات', icon: ClipboardList },
   { href: '/search', label: 'البحث', icon: Search },
-  { href: '/path', label: 'خطتي', icon: Map },
   { href: '/progress', label: 'تطويري', icon: TrendingUp },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
 ];
