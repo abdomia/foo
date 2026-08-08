@@ -11,8 +11,8 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "منصة تعلم الإحصاء | الصف الثالث الثانوي",
-  description: "منصة تعليمية متميزة لتعلم الإحصاء للصف الثالث الثانوي المصري",
+  title: "منصة تعلم الرياضيات والإحصاء | الصف الثالث الثانوي",
+  description: "منصة تعليمية متميزة لتعلم الرياضيات والإحصاء للصف الثالث الثانوي المصري",
 };
 
 export default function RootLayout({

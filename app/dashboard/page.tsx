@@ -184,7 +184,7 @@ export default function Dashboard() {
                 {user ? `مرحباً ${user.name}!` : 'مرحباً بك!'}
               </h1>
               <p className="text-text-secondary mt-1">
-                {user ? 'استمر في رحلتك لتعلم الإحصاء' : 'سجل الدخول وابدأ رحلتك في تعلم الإحصاء'}
+                {user ? 'استمر في رحلتك للتعلم' : 'سجل الدخول وابدأ رحلتك في تعلم الرياضيات والإحصاء'}
               </p>
               {activeClass && (
                 <Badge variant="secondary" className="mt-2">
@@ -477,7 +477,7 @@ export default function Dashboard() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
                   const phoneNumber = '01022916304';
-                  window.open(`https://wa.me/${phoneNumber}?text=مرحباً،سؤال عن الإحصاء`, '_blank');
+                  window.open(`https://wa.me/${phoneNumber}?text=مرحباً،سؤال عن الرياضيات والإحصاء`, '_blank');
                 }}
               >
                 <MessageCircle className="w-7 h-7 text-white" />

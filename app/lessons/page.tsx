@@ -158,7 +158,7 @@ if (isLessonLocked(item)) {
         <div className="space-y-6 animate-fade-in">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">الدروس التعليمية</h1>
-            <p className="text-text-secondary mt-1">شاهد فيديوهات تعليمية لتعلم الإحصاء</p>
+            <p className="text-text-secondary mt-1">شاهد فيديوهات تعليمية لتعلم الرياضيات والإحصاء</p>
           </div>
           <Card>
             <CardContent className="p-8 text-center">
@@ -177,7 +177,7 @@ if (isLessonLocked(item)) {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">الدروس التعليمية</h1>
-            <p className="text-text-secondary mt-1">شاهد فيديوهات تعليمية لتعلم الإحصاء</p>
+            <p className="text-text-secondary mt-1">شاهد فيديوهات تعليمية لتعلم الرياضيات والإحصاء</p>
           </div>
           <div className="flex gap-2 bg-muted p-1 rounded-xl">
             <button

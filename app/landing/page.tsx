@@ -35,7 +35,7 @@ const features = [
   {
     icon: Video,
     title: 'فيديوهات تعليمية عالية الجودة',
-    description: 'دروس مصورة بدقة عالية مع شروحات مفصلة من معلمين متخصصين في الإحصاء',
+    description: 'دروس مصورة بدقة عالية مع شروحات مفصلة من معلمين متخصصين في الرياضيات والإحصاء',
   },
   {
     icon: Target,
@@ -91,13 +91,13 @@ const testimonials = [
   {
     name: 'أحمد محمد',
     role: 'طالب الثانوية العامة',
-    content: 'منصة رائعة ساعدتني كثيراً في فهم الإحصاء. الفيديوهات واضحة جداً والمعلم يشرح بطريقة سهلة.',
+    content: 'منصة رائعة ساعدتني كثيراً في فهم الرياضيات والإحصاء. الفيديوهات واضحة جداً والمعلم يشرح بطريقة سهلة.',
     avatar: 'أ',
   },
   {
     name: 'فاطمة علي',
     role: 'طالبة الثانوية العامة',
-    content: 'الحمد لله حققت تقدماً كبيراً في الإحصاء بفضل هذه المنصة. أنصح بها كل طالب الثانوية.',
+    content: 'الحمد لله حققت تقدماً كبيراً في الرياضيات والإحصاء بفضل هذه المنصة. أنصح بها كل طالب الثانوية.',
     avatar: 'ف',
   },
   {
@@ -332,7 +332,7 @@ export default function LandingPage() {
               </h1>
 
               <p className="hero-subtitle text-lg sm:text-xl md:text-2xl text-text-secondary mb-3">
-                منصتك التعليمية الأولى في الإحصاء
+                منصتك التعليمية الأولى في الرياضيات والإحصاء
               </p>
 
               <p className="hero-description text-sm sm:text-base text-text-muted mb-6 max-w-lg mx-auto lg:mx-0">
@@ -417,8 +417,8 @@ export default function LandingPage() {
                   ابدأ رحلتك مع <span className="text-primary">الرائد</span>
                 </h2>
                 <p className="text-base sm:text-lg text-text-secondary leading-relaxed mb-6 max-w-lg mx-auto lg:mx-0">
-                  انضم إلى آلاف الطلاب الذين اختاروا منصة الرائد لتعلم الإحصاء. نوفر لك أفضل الفيديوهات التعليمية،
-                  تمارين تفاعلية، ومتابعة مستمرة لضمان تفوقك في مادة الإحصاء.
+                  انضم إلى آلاف الطلاب الذين اختاروا منصة الرائد لتعلم الرياضيات والإحصاء. نوفر لك أفضل الفيديوهات التعليمية،
+                  تمارين تفاعلية، ومتابعة مستمرة لضمان تفوقك في مادتي الرياضيات والإحصاء.
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                   <div className="flex items-center gap-2 text-text-primary">
@@ -494,7 +494,7 @@ export default function LandingPage() {
                 نحن هنا لنكون شريكك في <span className="text-primary">رحلة النجاح</span>
               </h2>
               <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
-                منصة الرائد هي منصة تعليمية مصرية متخصصة في تعليم مادة الإحصاء لطلاب الصف الثالث الثانوي
+                منصة الرائد هي منصة تعليمية مصرية متخصصة في تعليم مادتي الرياضيات والإحصاء لطلاب الصف الثالث الثانوي
               </p>
             </div>
           </SectionReveal>
@@ -547,7 +547,7 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <p className="text-text-secondary leading-relaxed">
-                    أن نكون المنصة التعليمية الرائدة في مجال الإحصاء بمصر والعالم العربي
+                    أن نكون المنصة التعليمية الرائدة في مجال الرياضيات والإحصاء بمصر والعالم العربي
                   </p>
                 </CardContent>
               </Card>
@@ -586,7 +586,7 @@ export default function LandingPage() {
                 محتوى تعليمي <span className="text-primary">شامل</span>
               </h2>
               <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
-                نوفر لك كل ما تحتاجه للنجاح في الإحصاء من فيديوهات ودروس تطبيقية واختبارات
+                نوفر لك كل ما تحتاجه للنجاح في الرياضيات والإحصاء من فيديوهات ودروس تطبيقية واختبارات
               </p>
             </div>
           </SectionReveal>

@@ -124,7 +124,7 @@ export default function SignupPage() {
             />
           </Link>
           <h1 className="text-xl sm:text-2xl font-bold text-text-primary">إنشاء حساب جديد</h1>
-          <p className="text-text-secondary mt-2 text-sm sm:text-base">انضم إلينا وابدأ رحلتك في تعلم الإحصاء</p>
+          <p className="text-text-secondary mt-2 text-sm sm:text-base">انضم إلينا وابدأ رحلتك في تعلم الرياضيات والإحصاء</p>
         </div>
 
         <Card>
