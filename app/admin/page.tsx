@@ -218,16 +218,22 @@ export default function AdminPage() {
       const res = await fetch('/api/admin/subscription-codes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(codeForm),
+        body: JSON.stringify({
+          plan: codeForm.plan,
+          durationDays: parseInt(codeForm.durationDays, 10),
+        }),
       });
       const data = await res.json();
       if (data.success) {
         fetchSubscriptionCodes();
         setShowCodeForm(false);
         setCodeForm({ plan: 'monthly', durationDays: '30' });
+      } else {
+        alert(data.error || 'حدث خطأ في إنشاء الكود');
       }
     } catch (error) {
       console.error('Failed to create code:', error);
+      alert('حدث خطأ في إنشاء الكود');
     }
   };
 
