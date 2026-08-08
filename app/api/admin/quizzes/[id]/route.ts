@@ -28,7 +28,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 
   try {
-    const { title, description, timeLimit, passingScore, questions, grade } = parsed.data;
+    const { title, description, timeLimit, passingScore, questions, grade, accessType } = parsed.data;
 
     if (questions) {
       await prisma.question.deleteMany({ where: { quizId: id } });
@@ -41,6 +41,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           grade: grade ?? undefined,
           timeLimit: timeLimit ?? undefined,
           passingScore: passingScore ?? undefined,
+          accessType: accessType ?? undefined,
           questions: {
             create: questions.map((q, index) => ({
               question: q.question,
@@ -64,6 +65,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           grade: grade ?? undefined,
           timeLimit: timeLimit ?? undefined,
           passingScore: passingScore ?? undefined,
+          accessType: accessType ?? undefined,
         },
       });
     }

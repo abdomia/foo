@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminPdfSchema } from '@/lib/validation';
+import { getEffectiveAccessLevel, gatePdf } from '@/lib/content-access';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const grade = searchParams.get('grade');
+
+    const user = await getSessionUser();
+    const accessLevel = await getEffectiveAccessLevel(user);
 
     const where: any = {};
     if (grade) {
@@ -23,7 +27,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, data: pdfs });
+    const data = pdfs.map((pdf) => gatePdf(pdf, accessLevel));
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching PDFs:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch PDFs' }, { status: 500 });
@@ -48,7 +54,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { title, description, fileUrl, grade, category = 'explanation', topicId } = parsed.data;
+    const { title, description, fileUrl, grade, category = 'explanation', topicId, accessType = 'FREE' } = parsed.data;
 
     const lastPdf = await prisma.pdf.findFirst({
       orderBy: { order: 'desc' },
@@ -62,6 +68,7 @@ export async function POST(request: NextRequest) {
         fileUrl,
         grade: grade ?? null,
         category,
+        accessType,
         topicId: topicId ?? null,
         order: newOrder,
       },

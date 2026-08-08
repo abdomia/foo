@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { paymentCreateSchema } from '@/lib/validation';
 import { getPlanPrice } from '@/lib/classes';
+import { createSubscriptionForPayment, getActiveSubscription } from '@/lib/subscription';
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -29,8 +30,9 @@ export async function POST(request: NextRequest) {
   try {
     const { plan, paymentMethod, classKey } = parsed.data;
 
-    if (user.isSubscribed) {
-      return NextResponse.json({ success: false, error: 'Already subscribed' }, { status: 400 });
+    const activeSubscription = await getActiveSubscription(user.id);
+    if (activeSubscription) {
+      return NextResponse.json({ success: false, error: 'لديك اشتراك نشط بالفعل' }, { status: 400 });
     }
 
     const amount = getPlanPrice(classKey, plan);
@@ -42,10 +44,20 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         amount,
         plan,
+        classKey: classKey ?? null,
         paymentMethod,
         transactionId: paymentRef,
         status: 'pending',
       },
+    });
+
+    await createSubscriptionForPayment({
+      userId: user.id,
+      plan,
+      classKey,
+      amount,
+      paymentId: payment.id,
+      status: 'pending',
     });
 
     return NextResponse.json({

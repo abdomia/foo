@@ -74,7 +74,8 @@ export default function AdminPaymentsPage() {
   };
 
   const pendingPayments = payments.filter(p => p.status === 'pending');
-  const completedPayments = payments.filter(p => p.status === 'completed');
+  const underReviewPayments = payments.filter(p => p.status === 'under_review');
+  const approvedPayments = payments.filter(p => p.status === 'approved');
 
   if (!user?.isAdmin) {
     return null;
@@ -110,61 +111,64 @@ export default function AdminPaymentsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {pendingPayments.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">لا توجد مدفوعات في الانتظار</p>
-                ) : (
-                  <div className="space-y-4">
-                    {pendingPayments.map((payment) => (
-                      <div key={payment.id} className="border border-border rounded-xl p-4">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center">
-                              <Phone className="w-6 h-6 text-yellow-600" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold">{payment.user.name}</span>
+                  {pendingPayments.length === 0 && underReviewPayments.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">لا توجد مدفوعات في الانتظار</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {[...pendingPayments, ...underReviewPayments].map((payment) => (
+                        <div key={payment.id} className="border border-border rounded-xl p-4">
+                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-yellow-100 dark:bg-yellow-900 rounded-xl flex items-center justify-center">
+                                <Phone className="w-6 h-6 text-yellow-600" />
                               </div>
-                              <p className="text-sm text-muted-foreground">{payment.user.phone}</p>
-                              <p className="text-xs text-muted-foreground font-mono">
-                                Ref: {payment.transactionId}
-                              </p>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold">{payment.user.name}</span>
+                                  {payment.status === 'under_review' && (
+                                    <span className="bg-blue-500 text-white text-xs px-2 py-0.5 rounded-full">قيد المراجعة</span>
+                                  )}
+                                </div>
+                                <p className="text-sm text-muted-foreground">{payment.user.phone}</p>
+                                <p className="text-xs text-muted-foreground font-mono">
+                                  Ref: {payment.transactionId}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                            <div className="text-center">
-                              <p className="text-2xl font-bold">{payment.amount}</p>
-                              <p className="text-xs text-muted-foreground">{payment.plan}</p>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => handleVerify(payment.id, 'approve')}
-                                size="sm"
-                                className="gap-1 bg-green-600 hover:bg-green-700"
-                              >
-                                <Check className="w-4 h-4" />
-                                تفعيل
-                              </Button>
-                              <Button
-                                onClick={() => handleVerify(payment.id, 'reject')}
-                                variant="destructive"
-                                size="sm"
-                                className="gap-1"
-                              >
-                                <X className="w-4 h-4" />
-                                رفض
-                              </Button>
+                            <div className="flex items-center gap-4">
+                              <div className="text-center">
+                                <p className="text-2xl font-bold">{payment.amount}</p>
+                                <p className="text-xs text-muted-foreground">{payment.plan}</p>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  onClick={() => handleVerify(payment.id, 'approve')}
+                                  size="sm"
+                                  className="gap-1 bg-green-600 hover:bg-green-700"
+                                >
+                                  <Check className="w-4 h-4" />
+                                  تفعيل
+                                </Button>
+                                <Button
+                                  onClick={() => handleVerify(payment.id, 'reject')}
+                                  variant="destructive"
+                                  size="sm"
+                                  className="gap-1"
+                                >
+                                  <X className="w-4 h-4" />
+                                  رفض
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
               </CardContent>
             </Card>
 
-            {/* Completed Payments */}
+            {/* Approved Payments */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -173,11 +177,11 @@ export default function AdminPaymentsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {completedPayments.length === 0 ? (
+                {approvedPayments.length === 0 ? (
                   <p className="text-muted-foreground text-center py-8">لا توجد مدفوعات مفعلة</p>
                 ) : (
                   <div className="space-y-2">
-                    {completedPayments.map((payment) => (
+                    {approvedPayments.map((payment) => (
                       <div key={payment.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                         <div className="flex items-center gap-3">
                           <Check className="w-4 h-4 text-green-500" />

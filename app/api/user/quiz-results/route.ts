@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { quizResultSchema } from '@/lib/validation';
+import { canAccessContent, getUserAccessLevel } from '@/lib/subscription';
 
 export async function GET() {
   const user = await getSessionUser();
@@ -53,6 +54,14 @@ export async function POST(request: NextRequest) {
     const quiz = await prisma.quiz.findUnique({ where: { id: quizId } });
     if (!quiz) {
       return NextResponse.json({ success: false, error: 'Quiz not found' }, { status: 404 });
+    }
+
+    const accessLevel = await getUserAccessLevel(user.id);
+    if (!canAccessContent(accessLevel, quiz.accessType)) {
+      return NextResponse.json(
+        { success: false, error: 'هذا الاختبار يتطلب اشتراكاً' },
+        { status: 403 }
+      );
     }
 
     const existing = await prisma.userQuizProgress.findUnique({

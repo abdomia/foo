@@ -99,7 +99,7 @@ export default function LessonsPage() {
     ? topics.find((t: any) => t.id === activeTopicId)
     : topics[0];
 
-  const canViewVideo = user?.isSubscribed;
+  const isLessonLocked = (item: any) => !!item.locked;
 
   // For practices tab, show practice-specific lessons or exercises
     // For explanations tab, show only explanation lessons
@@ -133,7 +133,7 @@ export default function LessonsPage() {
             return;
         }
 
-if (!canViewVideo) {
+if (isLessonLocked(item)) {
             setShowSubscriptionModal(true);
             return;
           }
@@ -324,13 +324,13 @@ if (!canViewVideo) {
                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
                              item.completed
                                ? 'bg-success/10 text-success'
-                               : canViewVideo && !item.type
+                               : !isLessonLocked(item) && !item.type
                                  ? 'bg-primary/10 text-primary'
                                  : 'bg-muted text-text-secondary'
                            }`}>
                              {item.completed ? (
                                <CheckCircle2 className="w-6 h-6" />
-                             ) : canViewVideo && !item.type ? (
+                             ) : !isLessonLocked(item) && !item.type ? (
                                <span>{index + 1}</span>
                              ) : (
                                <Lock className="w-6 h-6" />
@@ -339,12 +339,12 @@ if (!canViewVideo) {
                            <div className="flex-1 min-w-0">
                              <div className="flex items-center gap-2">
                                <h3 className="font-bold text-text-primary mb-1">{item.title}</h3>
-                               {!canViewVideo && !item.type && (
-                                 <Badge variant="secondary" className="gap-1">
-                                   <Crown className="w-3 h-3" />
-                                   للمشتركين
-                                 </Badge>
-                               )}
+                                {isLessonLocked(item) && !item.type && (
+                                  <Badge variant="secondary" className="gap-1">
+                                    <Crown className="w-3 h-3" />
+                                    {item.accessType === 'PREMIUM' ? 'للمشتركين المميزين' : 'للمشتركين'}
+                                  </Badge>
+                                )}
                              </div>
                              <p className="text-sm text-text-secondary">{item.description}</p>
                              <div className="flex items-center gap-4 mt-2">
@@ -372,7 +372,7 @@ if (!canViewVideo) {
         </div>
       </div>
 
-      {selectedLesson && canViewVideo && (
+      {selectedLesson && !isLessonLocked(selectedLesson) && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-surface rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between p-4 border-b border-border">

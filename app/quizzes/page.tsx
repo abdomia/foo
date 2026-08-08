@@ -24,6 +24,7 @@ import {
   BookOpen,
   ChevronUp,
   ChevronDown,
+  Lock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Certificate, CertificateSimple } from '@/components/Certificate';
@@ -36,6 +37,8 @@ interface Quiz {
   timeLimit: number | null;
   passingScore: number;
   questions: Question[];
+  locked?: boolean;
+  accessType?: string;
 }
 
 interface Question {
@@ -106,6 +109,10 @@ export default function QuizzesPage() {
   };
 
   const startQuiz = (quiz: Quiz) => {
+    if (quiz.locked) {
+      router.push('/subscribe');
+      return;
+    }
     setSelectedQuiz(quiz);
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
@@ -285,6 +292,12 @@ export default function QuizzesPage() {
                                                                         <Clock className="w-3 h-3" />
                                                                         {quiz.timeLimit} دقيقة
                                                                     </span>
+                                                                )}
+                                                                {quiz.locked && (
+                                                                    <Badge variant="secondary" className="gap-1">
+                                                                        <Lock className="w-3 h-3" />
+                                                                        {quiz.accessType === 'PREMIUM' ? 'للمشتركين المميزين' : 'للمشتركين'}
+                                                                    </Badge>
                                                                 )}
                                                             </div>
                                                         </div>

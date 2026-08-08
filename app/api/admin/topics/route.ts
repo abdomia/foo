@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminTopicSchema } from '@/lib/validation';
+import { getEffectiveAccessLevel, gateLesson, gatePdf } from '@/lib/content-access';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const grade = searchParams.get('grade');
+
+    const user = await getSessionUser();
+    const accessLevel = await getEffectiveAccessLevel(user);
 
     const where: any = {};
     if (grade) {
@@ -29,7 +33,14 @@ export async function GET(request: NextRequest) {
         },
       },
     });
-    return NextResponse.json({ success: true, data: topics });
+
+    const data = topics.map((topic) => ({
+      ...topic,
+      lessons: topic.lessons.map((lesson) => gateLesson(lesson, accessLevel)),
+      pdfs: topic.pdfs.map((pdf) => gatePdf(pdf, accessLevel)),
+    }));
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Error fetching topics:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch topics' }, { status: 500 });

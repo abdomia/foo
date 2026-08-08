@@ -5,10 +5,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Save, X, Check } from 'lucide-react';
+import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
 
 const quizFormInit = {
   title: '',
   description: '',
+  accessType: 'FREE',
   timeLimit: '',
   passingScore: '70',
   grade: '',
@@ -66,6 +68,7 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
       timeLimit: quizForm.timeLimit ? parseInt(quizForm.timeLimit) : null,
       passingScore: parseInt(quizForm.passingScore),
       grade: quizForm.grade || null,
+      accessType: quizForm.accessType || 'FREE',
     });
     setQuizForm(quizFormInit);
     setShowQuizForm(false);
@@ -129,6 +132,10 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
               <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
             </select>
           </div>
+          <AccessTypeSelect
+            value={quizForm.accessType}
+            onChange={(v) => setQuizForm({ ...quizForm, accessType: v })}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium mb-2 block">الوقت (دقائق)</label>
@@ -330,6 +337,10 @@ export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizM
               <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
             </select>
           </div>
+          <AccessTypeSelect
+            value={editingQuiz.accessType || 'FREE'}
+            onChange={(v) => setEditingQuiz({ ...editingQuiz, accessType: v })}
+          />
           <div className="border-t border-gray-700 pt-4">
             <div className="flex items-center justify-between mb-4">
               <label className="text-sm font-medium">الأسئلة</label>

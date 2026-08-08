@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminPdfSchema } from '@/lib/validation';
+import { getEffectiveAccessLevel, gatePdf } from '@/lib/content-access';
 
 async function requireAdmin() {
   const admin = await getSessionUser();
@@ -16,13 +17,15 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const user = await getSessionUser();
+    const accessLevel = await getEffectiveAccessLevel(user);
     const pdf = await prisma.pdf.findUnique({
       where: { id },
     });
     if (!pdf) {
       return NextResponse.json({ success: false, error: 'PDF not found' }, { status: 404 });
     }
-    return NextResponse.json({ success: true, data: pdf });
+    return NextResponse.json({ success: true, data: gatePdf(pdf, accessLevel) });
   } catch (error) {
     console.error('Error fetching pdf:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch pdf' }, { status: 500 });
@@ -50,7 +53,7 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const { title, description, fileUrl, order = 0, category = 'explanation', grade = null, topicId } = parsed.data;
+    const { title, description, fileUrl, order = 0, category = 'explanation', grade = null, topicId, accessType = 'FREE' } = parsed.data;
 
     const pdf = await prisma.pdf.update({
       where: { id },
@@ -61,6 +64,7 @@ export async function PUT(
         order,
         category,
         grade,
+        accessType,
         topicId: topicId ?? undefined,
       },
     });

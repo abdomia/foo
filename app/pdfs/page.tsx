@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +16,7 @@ import {
   Search,
   Crown,
   ArrowRight,
+  Lock,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -46,6 +48,7 @@ type CategoryType = 'explanation' | 'solution' | 'quizzes';
 
 export default function PdfsPage() {
   const { user, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [allPdfs, setAllPdfs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,29 +88,6 @@ export default function PdfsPage() {
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-
-  if (!user?.isSubscribed) {
-    return (
-      <MainLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Card className="max-w-md w-full">
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Crown className="w-8 h-8 text-primary" />
-              </div>
-              <h2 className="text-xl font-bold text-text-primary mb-2">اشترك للوصول</h2>
-              <p className="text-text-secondary mb-4">
-                يجب أن تكون مشتركاً للوصول إلى ملفات PDF
-              </p>
-              <Button asChild>
-                <a href="/subscribe">اشترك الآن</a>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </MainLayout>
-    );
-  }
 
   if (isLoading || authLoading) {
     return (
@@ -174,7 +154,43 @@ export default function PdfsPage() {
             {filteredPdfs.map((pdf: any, index: number) => {
               const config = categoryConfig[pdf.category as CategoryType] || categoryConfig.explanation;
               const IconComponent = config.icon;
-              return (
+              const locked = !!pdf.locked;
+              const wrapper = locked ? (
+                <motion.div
+                  key={pdf.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="block cursor-pointer"
+                  onClick={() => router.push('/subscribe')}
+                >
+                  <Card className="h-full hover:shadow-lg transition-shadow">
+                    <CardContent className="p-5">
+                      <div className="flex items-start gap-4">
+                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${config.color}/10`}>
+                          <IconComponent className={`w-6 h-6 ${config.textColor}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-text-primary mb-1 line-clamp-2">{pdf.title}</h3>
+                          {pdf.description && (
+                            <p className="text-sm text-text-secondary line-clamp-2 mb-2">{pdf.description}</p>
+                          )}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant="secondary" className="text-xs">
+                              {config.label}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Lock className="w-3 h-3" />
+                              {pdf.accessType === 'PREMIUM' ? 'للمشتركين المميزين' : 'للمشتركين'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <Lock className="w-4 h-4 text-text-secondary flex-shrink-0" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ) : (
                 <motion.a
                   key={pdf.id}
                   href={pdf.fileUrl}
@@ -206,6 +222,7 @@ export default function PdfsPage() {
                   </Card>
                 </motion.a>
               );
+              return wrapper;
             })}
           </div>
         )}

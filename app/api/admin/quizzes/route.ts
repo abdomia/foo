@@ -2,11 +2,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminQuizSchema } from '@/lib/validation';
+import { getEffectiveAccessLevel, gateQuiz } from '@/lib/content-access';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const grade = searchParams.get('grade');
+
+    const user = await getSessionUser();
+    const accessLevel = await getEffectiveAccessLevel(user);
 
     const where: any = {};
     if (grade) {
@@ -32,7 +36,9 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json({ success: true, data: quizzes });
+    const data = quizzes.map((quiz) => gateQuiz(quiz, accessLevel));
+
+    return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Failed to fetch quizzes:', error);
     return NextResponse.json({ success: false, error: 'Failed to fetch quizzes' }, { status: 500 });
@@ -57,7 +63,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { title, description, topicId, timeLimit, passingScore = 70, questions, grade } = parsed.data;
+    const { title, description, topicId, timeLimit, passingScore = 70, questions, grade, accessType = 'FREE' } = parsed.data;
 
     const quiz = await prisma.quiz.create({
       data: {
@@ -67,6 +73,7 @@ export async function POST(request: Request) {
         topicId,
         timeLimit: timeLimit ?? null,
         passingScore,
+        accessType,
         questions: {
           create: questions.map((q, index) => ({
             question: q.question,

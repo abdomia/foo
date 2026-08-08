@@ -24,9 +24,29 @@ model User {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   payments           Payment[]
+  subscriptions      Subscription[]
   quizProgress       UserQuizProgress[]
   lessonProgress     UserLessonProgress[]
   sessions           Session[]
+}
+
+model Subscription {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan       String
+  classKey   String?
+  amount     Int
+  status     String   @default("pending") // pending | under_review | approved | rejected | cancelled
+  startDate  DateTime?
+  expiryDate DateTime?
+  paymentId  String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiryDate])
 }
 
 model Session {
@@ -66,6 +86,7 @@ model Lesson {
   videoUrl    String
   duration    String
   type        String   @default("explanation")
+  accessType  String   @default("FREE") // FREE | SUBSCRIBER | PREMIUM
   grade       String?
   order       Int      @default(0)
   topicId     String
@@ -80,6 +101,7 @@ model Payment {
   userId         String
   amount         Int
   plan           String
+  classKey       String?
   paymentMethod  String   @default("vodafone_cash")
   transactionId  String?
   status         String   @default("pending")
@@ -107,6 +129,7 @@ model Pdf {
   description String?
   fileUrl     String
   category    String   @default("explanation")
+  accessType  String   @default("FREE") // FREE | SUBSCRIBER | PREMIUM
   grade       String?
   order       Int      @default(0)
   topicId     String?
@@ -119,6 +142,7 @@ model Quiz {
   id           String             @id @default(cuid())
   title        String
   description  String?
+  accessType   String             @default("FREE") // FREE | SUBSCRIBER | PREMIUM
   grade        String?
   topicId      String
   topic        Topic              @relation(fields: [topicId], references: [id], onDelete: Cascade)

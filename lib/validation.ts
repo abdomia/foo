@@ -41,6 +41,8 @@ export const classKeySchema = z.enum([
   'third_secondary_math',
 ]);
 
+export const accessTypeSchema = z.enum(['FREE', 'SUBSCRIBER', 'PREMIUM']).default('FREE');
+
 export const paymentCreateSchema = z.object({
   plan: planIdSchema,
   paymentMethod: z.enum(['vodafone_cash', 'instapay']),
@@ -75,6 +77,7 @@ export const adminLessonSchema = z.object({
   videoUrl: z.string().trim().min(1).max(1000),
   duration: z.string().trim().max(20).optional(),
   type: z.string().trim().max(40).optional(),
+  accessType: accessTypeSchema,
   grade: z.string().trim().max(60).optional().nullable(),
   order: z.number().int().min(0).optional(),
   topicId: z.string().min(1),
@@ -83,6 +86,7 @@ export const adminLessonSchema = z.object({
 export const adminQuizSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: z.string().max(1000).optional().nullable(),
+  accessType: accessTypeSchema,
   grade: z.string().trim().max(60).optional().nullable(),
   topicId: z.string().min(1),
   timeLimit: z.number().int().min(0).nullable().optional(),
@@ -106,6 +110,7 @@ export const adminPdfSchema = z.object({
   description: z.string().max(1000).optional().nullable(),
   fileUrl: z.string().trim().min(1).max(1000),
   category: z.string().trim().max(40).optional(),
+  accessType: accessTypeSchema,
   grade: z.string().trim().max(60).optional().nullable(),
   order: z.number().int().min(0).optional(),
   topicId: z.string().min(1).optional().nullable(),

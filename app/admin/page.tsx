@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { QuizFormModal, EditQuizModal } from '@/components/admin/QuizModals';
+import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
 import { CLASS_OPTIONS, getClassByKey } from '@/lib/classes';
 import {
   Video,
@@ -42,6 +43,7 @@ interface Lesson {
   grade?: string | null;
   order: number;
   type?: string;
+  accessType?: string;
 }
 
 interface Topic {
@@ -62,6 +64,7 @@ interface Pdf {
   fileUrl: string;
   order: number;
   category?: string;
+  accessType?: string;
 }
 
 export default function AdminPage() {
@@ -95,6 +98,7 @@ export default function AdminPage() {
     videoUrl: '',
     duration: '10:00',
     type: 'explanation',
+    accessType: 'FREE',
     grade: '',
   });
 
@@ -103,6 +107,7 @@ export default function AdminPage() {
     description: '',
     fileUrl: '',
     category: 'explanation',
+    accessType: 'FREE',
     grade: '',
   });
   const [showPdfForm, setShowPdfForm] = useState(false);
@@ -326,7 +331,7 @@ export default function AdminPage() {
       if (data.success) {
         fetchTopics();
         setShowLessonForm(false);
-        setLessonForm({ title: '', description: '', videoUrl: '', duration: '10:00', type: 'explanation', grade: '' });
+        setLessonForm({ title: '', description: '', videoUrl: '', duration: '10:00', type: 'explanation', accessType: 'FREE', grade: '' });
       }
     } catch (error) {
       console.error('Failed to create lesson:', error);
@@ -382,7 +387,7 @@ const handleCreatePdf = async () => {
         if (data.success) {
           fetchTopics();
           setShowPdfForm(false);
-          setPdfForm({ title: '', description: '', fileUrl: '', category: 'explanation', grade: '' });
+          setPdfForm({ title: '', description: '', fileUrl: '', category: 'explanation', accessType: 'FREE', grade: '' });
           alert('تم إنشاء الملف بنجاح');
         } else {
           alert(data.error || 'فشل في إنشاء الملف');
@@ -1559,6 +1564,10 @@ const handleUpdatePdf = async () => {
                   <option value="practice">تمرين (حل أسئلة)</option>
                 </select>
               </div>
+              <AccessTypeSelect
+                value={lessonForm.accessType}
+                onChange={(v) => setLessonForm({ ...lessonForm, accessType: v })}
+              />
               <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
                 <select
@@ -1653,6 +1662,10 @@ const handleUpdatePdf = async () => {
                   <option value="practice">تمرين (حل أسئلة)</option>
                 </select>
               </div>
+              <AccessTypeSelect
+                value={editingLesson.accessType || 'FREE'}
+                onChange={(v) => setEditingLesson({ ...editingLesson, accessType: v })}
+              />
               <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
                 <select
@@ -1706,6 +1719,7 @@ const handleUpdatePdf = async () => {
                   className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
                 >
                   <option value="monthly">شهري</option>
+                  <option value="semester">فصل دراسي</option>
                   <option value="yearly">سنوي</option>
                 </select>
               </div>
@@ -1809,12 +1823,16 @@ const handleUpdatePdf = async () => {
                   <option value="quizzes">بنك اسئلة</option>
                 </select>
               </div>
+              <AccessTypeSelect
+                value={pdfForm.accessType}
+                onChange={(v) => setPdfForm({ ...pdfForm, accessType: v })}
+              />
                 <div className="flex gap-2 pt-4">
                   <Button
                     variant="outline"
                     onClick={() => {
                       setShowPdfForm(false);
-                      setPdfForm({ title: '', description: '', fileUrl: '', category: 'explanation', grade: '' });
+                      setPdfForm({ title: '', description: '', fileUrl: '', category: 'explanation', accessType: 'FREE', grade: '' });
                     }}
                     className="flex-1"
                   >
@@ -1900,6 +1918,10 @@ const handleUpdatePdf = async () => {
                     <option value="quizzes">بنك اسئلة</option>
                   </select>
                 </div>
+                <AccessTypeSelect
+                  value={editingPdf.accessType || 'FREE'}
+                  onChange={(v) => setEditingPdf({ ...editingPdf, accessType: v })}
+                />
                 <div className="flex gap-2 pt-4">
                   <Button
                     variant="outline"

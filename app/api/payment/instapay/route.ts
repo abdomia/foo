@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { paymentCreateSchema } from '@/lib/validation';
 import { getPlanPrice } from '@/lib/classes';
+import { createSubscriptionForPayment, getActiveSubscription } from '@/lib/subscription';
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -26,23 +28,50 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { plan } = parsed.data;
-    const amount = getPlanPrice(null, plan);
-    const paymentId = 'INSTAPAY-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const { plan, paymentMethod, classKey } = parsed.data;
+
+    const activeSubscription = await getActiveSubscription(user.id);
+    if (activeSubscription) {
+      return NextResponse.json({ success: false, error: 'لديك اشتراك نشط بالفعل' }, { status: 400 });
+    }
+
+    const amount = getPlanPrice(classKey, plan);
+    const paymentRef = `IP${Date.now()}${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
+
+    const payment = await prisma.payment.create({
+      data: {
+        userId: user.id,
+        amount,
+        plan,
+        classKey: classKey ?? null,
+        paymentMethod,
+        transactionId: paymentRef,
+        status: 'pending',
+      },
+    });
+
+    await createSubscriptionForPayment({
+      userId: user.id,
+      plan,
+      classKey,
+      amount,
+      paymentId: payment.id,
+      status: 'pending',
+    });
 
     return NextResponse.json({
       success: true,
-      paymentId,
-      message: 'تم إنشاء عملية الدفع. في الإنتاج سيتم توجيهك لصفحة الدفع.',
-      paymentDetails: {
-        id: paymentId,
+      data: {
+        paymentId: payment.id,
+        transactionId: paymentRef,
         amount,
-        currency: 'EGP',
-        status: 'pending',
+        plan,
         method: 'instapay',
+        status: 'pending',
       },
     });
-  } catch {
+  } catch (error) {
+    console.error('Error creating instapay payment:', error);
     return NextResponse.json(
       { success: false, error: 'حدث خطأ في الخادم' },
       { status: 500 }
