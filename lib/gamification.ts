@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { createNotification } from '@/lib/notifications';
+import { issueProgramCertificate, issueUnitCertificate } from '@/lib/certificates';
 
 // XP rewards per activity.
 export const XP = {
@@ -132,6 +133,7 @@ export async function recordAnsweredQuestions(userId: string, count: number) {
 
 // Called when a lesson first becomes completed. Awards the unit bonus
 // (+50 XP) and the "first unit" badge when every lesson in the topic is done.
+// Also issues the unit certificate.
 export async function checkUnitCompletion(userId: string, topicId: string) {
   const topicLessons = await prisma.lesson.findMany({
     where: { topicId },
@@ -151,7 +153,20 @@ export async function checkUnitCompletion(userId: string, topicId: string) {
     select: { title: true },
   });
 
-  const user = await prisma.user.update({
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true },
+  });
+
+  const certificate = await issueUnitCertificate({
+    userId,
+    studentName: user?.name ?? 'طالب',
+    courseId: topicId,
+    courseTitle: topic?.title ?? 'وحدة تعليمية',
+    completionPercent: 100,
+  });
+
+  const updated = await prisma.user.update({
     where: { id: userId },
     data: { unitsCompleted: { increment: 1 } },
     select: { unitsCompleted: true },
@@ -164,8 +179,48 @@ export async function checkUnitCompletion(userId: string, topicId: string) {
     type: 'achievement',
     title: 'أكملت وحدة كاملة',
     body: topic?.title ?? '',
-    link: '/progress',
+    link: '/certificates',
   });
 
-  return { unitsCompleted: user.unitsCompleted };
+  return { unitsCompleted: updated.unitsCompleted, certificate };
+}
+
+// Called when a lesson completes. Issues the full program certificate once
+// every lesson across all topics is completed.
+export async function checkProgramCompletion(userId: string) {
+  const [user, allLessons, progress] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, grade: true },
+    }),
+    prisma.lesson.count(),
+    prisma.userLessonProgress.findMany({
+      where: { userId, completed: true },
+      select: { lessonId: true },
+    }),
+  ]);
+  if (!user || allLessons === 0) return;
+  if (progress.length < allLessons) return;
+
+  const completedCount = progress.length;
+  const percent = Math.round((completedCount / allLessons) * 100);
+  if (percent < 100) return;
+
+  const programTitle = 'البرنامج الكامل';
+  const certificate = await issueProgramCertificate({
+    userId,
+    studentName: user.name,
+    courseTitle: programTitle,
+    completionPercent: percent,
+  });
+
+  await createNotification({
+    userId,
+    type: 'achievement',
+    title: 'شهادة البرنامج متاحة',
+    body: 'مبروك! أكملت البرنامج بالكامل',
+    link: '/certificates',
+  });
+
+  return { certificate };
 }

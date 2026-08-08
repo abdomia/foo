@@ -40,6 +40,24 @@ model User {
   unitsCompleted     Int                @default(0)
   xpLogs             XpLog[]
   badges             Badge[]
+  certificates       Certificate[]
+}
+
+model Certificate {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  certificateId     String   @unique
+  courseId          String
+  courseTitle       String
+  completionPercent Int
+  studentName       String
+  teacherName       String
+  issuedAt          DateTime @default(now())
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([certificateId])
 }
 
 model XpLog {
@@ -101,6 +119,7 @@ model Session {
 model SiteSetting {
   id    String @id @default("platform")
   landingVideoUrl String @default("k3sRZvSlBNE")
+  teacherName String @default("منصة الرائد")
 }
 
 model Topic {

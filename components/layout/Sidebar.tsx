@@ -27,6 +27,7 @@ import {
   Search,
   Star,
   Bell,
+  Award,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -39,6 +40,7 @@ const navItems = [
   { href: '/quizzes', label: 'الاختبارات', icon: ClipboardList },
   { href: '/search', label: 'البحث', icon: Search },
   { href: '/favorites', label: 'المفضلة', icon: Star },
+  { href: '/certificates', label: 'شهاداتي', icon: Award },
   { href: '/path', label: 'خطتي', icon: Map },
   { href: '/progress', label: 'تطويري', icon: TrendingUp },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
@@ -294,6 +296,17 @@ export function Sidebar() {
                         <span className="text-sm font-medium">اشترك الآن</span>
                       </Link>
                     )}
+                    <Link
+                      href="/profile"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        setIsOpen(false);
+                      }}
+                      className="flex items-center gap-2 px-4 py-3 text-text-secondary hover:bg-muted transition-colors"
+                    >
+                      <User className="w-4 h-4" />
+                      <span className="text-sm">الملف الشخصي</span>
+                    </Link>
                     <Link
                       href="/progress"
                       onClick={() => {

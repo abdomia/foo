@@ -3,7 +3,13 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { lessonProgressSchema } from '@/lib/validation';
 import { createNotification } from '@/lib/notifications';
-import { awardXp, checkUnitCompletion, touchStreak, XP } from '@/lib/gamification';
+import {
+  awardXp,
+  checkProgramCompletion,
+  checkUnitCompletion,
+  touchStreak,
+  XP,
+} from '@/lib/gamification';
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -68,6 +74,7 @@ export async function POST(request: NextRequest) {
           link: `/lesson/${lesson.id}`,
         });
         await checkUnitCompletion(user.id, lesson.topicId);
+        await checkProgramCompletion(user.id);
       }
 
       return NextResponse.json({ success: true, data: updated });
@@ -98,6 +105,7 @@ export async function POST(request: NextRequest) {
         link: `/lesson/${lesson.id}`,
       });
       await checkUnitCompletion(user.id, lesson.topicId);
+      await checkProgramCompletion(user.id);
     }
 
     return NextResponse.json({ success: true, data: newProgress });

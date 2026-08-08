@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 const settingsSchema = z.object({
   landingVideoUrl: z.string().trim().min(1).max(500),
+  teacherName: z.string().trim().min(1).max(200).optional(),
 });
 
 export async function GET() {
@@ -39,11 +40,15 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { landingVideoUrl } = parsed.data;
+    const { landingVideoUrl, teacherName } = parsed.data;
     const settings = await prisma.siteSetting.upsert({
       where: { id: 'platform' },
-      update: { landingVideoUrl },
-      create: { id: 'platform', landingVideoUrl },
+      update: { landingVideoUrl, ...(teacherName !== undefined ? { teacherName } : {}) },
+      create: {
+        id: 'platform',
+        landingVideoUrl,
+        ...(teacherName !== undefined ? { teacherName } : {}),
+      },
     });
     return NextResponse.json({ success: true, data: settings });
   } catch {

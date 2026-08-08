@@ -658,7 +658,7 @@ const handleUpdatePdf = async () => {
   };
 
   function SettingsTab() {
-    const [settings, setSettings] = useState({ landingVideoUrl: 'k3sRZvSlBNE' });
+    const [settings, setSettings] = useState({ landingVideoUrl: 'k3sRZvSlBNE', teacherName: '' });
     const [saving, setSaving] = useState(false);
     const [settingsMessage, setSettingsMessage] = useState('');
     const [announcementTitle, setAnnouncementTitle] = useState('');
@@ -750,6 +750,14 @@ const handleUpdatePdf = async () => {
               value={settings.landingVideoUrl}
               onChange={(e) => setSettings({ ...settings, landingVideoUrl: e.target.value })}
               placeholder="https://www.youtube.com/watch?v=..."
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">اسم المدرس (يظهر على الشهادات)</label>
+            <Input
+              value={settings.teacherName}
+              onChange={(e) => setSettings({ ...settings, teacherName: e.target.value })}
+              placeholder="مثال: أ. محمد أحمد"
             />
           </div>
           {settingsMessage && (
