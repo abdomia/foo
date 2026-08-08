@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
+import FavoriteButton from '@/components/FavoriteButton';
 import {
   FileText,
   Download,
@@ -164,8 +165,14 @@ export default function PdfsPage() {
                   className="block cursor-pointer"
                   onClick={() => router.push('/subscribe')}
                 >
-                  <Card className="h-full hover:shadow-lg transition-shadow">
+                  <Card className="h-full hover:shadow-lg transition-shadow relative">
                     <CardContent className="p-5">
+                      <FavoriteButton
+                        itemType="pdf"
+                        itemId={pdf.id}
+                        title={pdf.title}
+                        className="absolute top-3 left-3 z-10 bg-surface/80 rounded-full p-1.5 shadow-sm"
+                      />
                       <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${config.color}/10`}>
                           <IconComponent className={`w-6 h-6 ${config.textColor}`} />
@@ -201,8 +208,14 @@ export default function PdfsPage() {
                   transition={{ delay: index * 0.05 }}
                   className="block"
                 >
-                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
+                  <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer relative">
                     <CardContent className="p-5">
+                      <FavoriteButton
+                        itemType="pdf"
+                        itemId={pdf.id}
+                        title={pdf.title}
+                        className="absolute top-3 left-3 z-10 bg-surface/80 rounded-full p-1.5 shadow-sm"
+                      />
                       <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${config.color}/10`}>
                           <IconComponent className={`w-6 h-6 ${config.textColor}`} />

@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Certificate, CertificateSimple } from '@/components/Certificate';
+import FavoriteButton from '@/components/FavoriteButton';
 
 interface Quiz {
   id: string;
@@ -735,7 +736,16 @@ export default function QuizzesPage() {
                           <span className="text-sm font-bold text-text-primary">
                             {i + 1}. {item.question}
                           </span>
-                          <DifficultyBadge difficulty={item.difficulty} />
+                          <div className="flex items-center gap-2">
+                            <FavoriteButton
+                              itemType="question"
+                              itemId={item.questionId}
+                              title={item.question}
+                              context={selectedQuiz.title}
+                              className="p-1 hover:bg-yellow-500/10 rounded"
+                            />
+                            <DifficultyBadge difficulty={item.difficulty} />
+                          </div>
                         </div>
                         <div className="space-y-2 text-sm">
                           <p className="flex items-center gap-2 text-error">

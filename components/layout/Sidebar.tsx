@@ -25,18 +25,20 @@ import {
   Lightbulb,
   Map,
   Search,
+  Star,
+  Bell,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useAuth } from '@/components/AuthProvider';
 import { getClassByKey } from '@/lib/classes';
-
 const navItems = [
   { href: '/', label: 'الرئيسية', icon: Home },
   { href: '/lessons', label: 'الدروس', icon: BookOpen },
   { href: '/pdfs', label: 'PDFs', icon: FileText },
   { href: '/quizzes', label: 'الاختبارات', icon: ClipboardList },
   { href: '/search', label: 'البحث', icon: Search },
+  { href: '/favorites', label: 'المفضلة', icon: Star },
   { href: '/path', label: 'خطتي', icon: Map },
   { href: '/progress', label: 'تطويري', icon: TrendingUp },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
@@ -49,6 +51,27 @@ export function Sidebar() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    const loadUnread = async () => {
+      try {
+        const res = await fetch('/api/user/notifications');
+        const json = await res.json();
+        if (active && json.success) setUnreadCount(json.data.unreadCount);
+      } catch {
+        // ignore
+      }
+    };
+    loadUnread();
+    const interval = setInterval(loadUnread, 60000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [user]);
 
   // Removed refreshUser call to prevent infinite loop
 
@@ -105,7 +128,7 @@ export function Sidebar() {
           </div>
 
             <nav className="flex-1 p-4">
-            <ul className="space-y-2">
+              <ul className="space-y-2">
               {navItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -126,6 +149,30 @@ export function Sidebar() {
                   </li>
                 );
               })}
+              {user && (
+                <li>
+                  <Link
+                    href="/notifications"
+                    onClick={() => setIsOpen(false)}
+                    className={cn(
+                      'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                      pathname === '/notifications'
+                        ? 'bg-primary text-white shadow-md'
+                        : 'text-text-secondary hover:bg-muted hover:text-text-primary'
+                    )}
+                  >
+                    <div className="relative">
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-1.5 -left-1.5 min-w-4 h-4 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-medium">الإشعارات</span>
+                  </Link>
+                </li>
+              )}
               {user?.isAdmin && (
                 <li>
                   <Link

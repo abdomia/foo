@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminLessonSchema } from '@/lib/validation';
 import { getEffectiveAccessLevel, gateLesson } from '@/lib/content-access';
+import { notifyAllUsers } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,6 +66,15 @@ export async function POST(request: NextRequest) {
         keyPoints: keyPoints.length > 0 ? keyPoints : undefined,
         files: files.length > 0 ? files : undefined,
       },
+    });
+
+    // Notify students in this grade (or everyone if no grade) about the new lesson.
+    await notifyAllUsers({
+      type: 'new_lesson',
+      title: 'درس جديد',
+      body: title,
+      link: `/lesson/${lesson.id}`,
+      grade,
     });
 
     return NextResponse.json({ success: true, data: lesson });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { generateQuizSchema } from '@/lib/validation';
+import { notifyAllUsers } from '@/lib/notifications';
 
 async function requireAdmin() {
   const admin = await getSessionUser();
@@ -130,6 +131,14 @@ export async function POST(request: NextRequest) {
         },
       },
       include: { questions: { orderBy: { order: 'asc' } } },
+    });
+
+    await notifyAllUsers({
+      type: 'new_quiz',
+      title: 'اختبار جديد',
+      body: title,
+      link: '/quizzes',
+      grade,
     });
 
     return NextResponse.json({

@@ -34,6 +34,8 @@ import {
   GripVertical,
   Database,
   Sparkles,
+  Bell,
+  Send,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -659,6 +661,40 @@ const handleUpdatePdf = async () => {
     const [settings, setSettings] = useState({ landingVideoUrl: 'k3sRZvSlBNE' });
     const [saving, setSaving] = useState(false);
     const [settingsMessage, setSettingsMessage] = useState('');
+    const [announcementTitle, setAnnouncementTitle] = useState('');
+    const [announcementMessage, setAnnouncementMessage] = useState('');
+    const [announcementGrade, setAnnouncementGrade] = useState('');
+    const [announcementStatus, setAnnouncementStatus] = useState('');
+    const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+
+    const sendAnnouncement = async () => {
+      setSendingAnnouncement(true);
+      setAnnouncementStatus('');
+      try {
+        const res = await fetch('/api/admin/announcements', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: announcementTitle.trim(),
+            message: announcementMessage.trim(),
+            grade: announcementGrade || null,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setAnnouncementStatus('تم الإرسال بنجاح');
+          setAnnouncementTitle('');
+          setAnnouncementMessage('');
+        } else {
+          setAnnouncementStatus(data.error ?? 'فشل الإرسال');
+        }
+      } catch {
+        setAnnouncementStatus('فشل الإرسال');
+      } finally {
+        setSendingAnnouncement(false);
+        setTimeout(() => setAnnouncementStatus(''), 3000);
+      }
+    };
 
     useEffect(() => {
       fetch('/api/admin/settings').then(r => r.json()).then(data => {
@@ -690,7 +726,8 @@ const handleUpdatePdf = async () => {
     };
 
     return (
-      <Card>
+      <>
+        <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -729,6 +766,79 @@ const handleUpdatePdf = async () => {
           </Button>
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="w-5 h-5" />
+            إرسال إعلان للطلاب
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">عنوان الإعلان</label>
+            <Input
+              value={announcementTitle}
+              onChange={(e) => setAnnouncementTitle(e.target.value)}
+              placeholder="مثال: موعد الاختبار الشهري"
+              className="bg-card border-border text-foreground"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">نص الإعلان</label>
+            <textarea
+              value={announcementMessage}
+              onChange={(e) => setAnnouncementMessage(e.target.value)}
+              className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground min-h-[80px]"
+              placeholder="اكتب تفاصيل الإعلان..."
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">مستهدف لصف معين؟</label>
+            <select
+              value={announcementGrade}
+              onChange={(e) => setAnnouncementGrade(e.target.value)}
+              className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+            >
+              <option value="">كل الطلاب</option>
+              <option value="third_preparatory">الصف الثالث الاعدادي</option>
+              <option value="first_secondary">الصف الأول الثانوي</option>
+              <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
+              <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
+              <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
+            </select>
+          </div>
+          {announcementStatus && (
+            <div
+              className={`text-sm rounded-lg p-3 ${
+                announcementStatus.includes('تم الإرسال')
+                  ? 'bg-success/10 text-success'
+                  : 'bg-destructive/10 text-destructive'
+              }`}
+            >
+              {announcementStatus}
+            </div>
+          )}
+          <Button
+            onClick={sendAnnouncement}
+            disabled={sendingAnnouncement || !announcementTitle.trim()}
+            className="gap-2"
+          >
+            {sendingAnnouncement ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                جاري الإرسال...
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                إرسال الإعلان
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+      </>
     );
   }
 

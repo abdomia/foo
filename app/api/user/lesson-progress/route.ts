@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { lessonProgressSchema } from '@/lib/validation';
+import { createNotification } from '@/lib/notifications';
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -56,6 +57,17 @@ export async function POST(request: NextRequest) {
           completedAt: completed ? new Date() : existingProgress.completedAt,
         },
       });
+
+      if (completed && !existingProgress.completed) {
+        await createNotification({
+          userId: user.id,
+          type: 'achievement',
+          title: 'أكملت درساً جديداً',
+          body: lesson.title,
+          link: `/lesson/${lesson.id}`,
+        });
+      }
+
       return NextResponse.json({ success: true, data: updated });
     }
 
@@ -70,6 +82,16 @@ export async function POST(request: NextRequest) {
         completedAt: completed ? new Date() : null,
       },
     });
+
+    if (completed) {
+      await createNotification({
+        userId: user.id,
+        type: 'achievement',
+        title: 'أكملت درساً جديداً',
+        body: lesson.title,
+        link: `/lesson/${lesson.id}`,
+      });
+    }
 
     return NextResponse.json({ success: true, data: newProgress });
   } catch (error) {

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminPdfSchema } from '@/lib/validation';
 import { getEffectiveAccessLevel, gatePdf } from '@/lib/content-access';
+import { notifyAllUsers } from '@/lib/notifications';
 
 export async function GET(request: NextRequest) {
   try {
@@ -72,6 +73,15 @@ export async function POST(request: NextRequest) {
         topicId: topicId ?? null,
         order: newOrder,
       },
+    });
+
+    // Notify students in this grade (or everyone if no grade) about the new PDF.
+    await notifyAllUsers({
+      type: 'new_pdf',
+      title: 'ملف جديد',
+      body: title,
+      link: '/pdfs',
+      grade,
     });
 
     return NextResponse.json({ success: true, data: pdf });

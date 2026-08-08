@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { quizResultSchema } from '@/lib/validation';
 import { canAccessContent, getUserAccessLevel } from '@/lib/subscription';
+import { createNotification } from '@/lib/notifications';
 
 export async function GET() {
   const user = await getSessionUser();
@@ -110,6 +111,24 @@ export async function POST(request: NextRequest) {
             completedAt: new Date(),
           },
         });
+
+    // Notify about the result, plus an achievement on first pass.
+    await createNotification({
+      userId: user.id,
+      type: 'quiz_result',
+      title: 'نتيجة اختبارك',
+      body: `حصلت على ${score}% في "${quiz.title}"${passed ? ' — مبروك، اجتزت الاختبار!' : ''}`,
+      link: '/quizzes',
+    });
+    if (passed && !existing?.passed) {
+      await createNotification({
+        userId: user.id,
+        type: 'achievement',
+        title: 'إنجاز جديد',
+        body: `اجتزت اختبار "${quiz.title}" بنجاح`,
+        link: '/progress',
+      });
+    }
 
     return NextResponse.json({
       success: true,

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
 import { useAuth } from '@/components/AuthProvider';
+import FavoriteButton from '@/components/FavoriteButton';
 import {
   ArrowRight,
   ArrowLeft,
@@ -206,6 +207,14 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                 )}
               </div>
             </div>
+            <FavoriteButton
+              itemType="lesson"
+              itemId={lesson.id}
+              title={lesson.title}
+              context={topic.title}
+              showLabel
+              className="px-3 py-2 bg-muted hover:bg-yellow-500/10"
+            />
           </div>
           <Link href="/lessons">
             <Button variant="outline" className="gap-2">

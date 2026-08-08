@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminQuizSchema } from '@/lib/validation';
 import { getEffectiveAccessLevel, gateQuiz } from '@/lib/content-access';
+import { notifyAllUsers } from '@/lib/notifications';
 
 export async function GET(request: Request) {
   try {
@@ -89,6 +90,15 @@ export async function POST(request: Request) {
       include: {
         questions: true,
       },
+    });
+
+    // Notify students in this grade (or everyone if no grade) about the new quiz.
+    await notifyAllUsers({
+      type: 'new_quiz',
+      title: 'اختبار جديد',
+      body: title,
+      link: '/quizzes',
+      grade,
     });
 
     return NextResponse.json({ success: true, data: quiz });
