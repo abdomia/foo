@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { lessonProgressSchema } from '@/lib/validation';
 import { createNotification } from '@/lib/notifications';
+import { awardXp, checkUnitCompletion, touchStreak, XP } from '@/lib/gamification';
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
           body: lesson.title,
           link: `/lesson/${lesson.id}`,
         });
+        await checkUnitCompletion(user.id, lesson.topicId);
       }
 
       return NextResponse.json({ success: true, data: updated });
@@ -83,6 +85,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // First time watching this lesson: award watch XP and refresh the streak.
+    await touchStreak(user.id);
+    await awardXp(user.id, XP.LESSON_WATCH, 'lesson_watch');
+
     if (completed) {
       await createNotification({
         userId: user.id,
@@ -91,6 +97,7 @@ export async function POST(request: NextRequest) {
         body: lesson.title,
         link: `/lesson/${lesson.id}`,
       });
+      await checkUnitCompletion(user.id, lesson.topicId);
     }
 
     return NextResponse.json({ success: true, data: newProgress });

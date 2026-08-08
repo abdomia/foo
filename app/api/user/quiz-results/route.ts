@@ -4,6 +4,13 @@ import { getSessionUser, unauthorized } from '@/lib/auth';
 import { quizResultSchema } from '@/lib/validation';
 import { canAccessContent, getUserAccessLevel } from '@/lib/subscription';
 import { createNotification } from '@/lib/notifications';
+import {
+  awardBadge,
+  awardXp,
+  recordAnsweredQuestions,
+  touchStreak,
+  XP,
+} from '@/lib/gamification';
 
 export async function GET() {
   const user = await getSessionUser();
@@ -111,6 +118,26 @@ export async function POST(request: NextRequest) {
             completedAt: new Date(),
           },
         });
+
+    // Gamification: streak + XP + counters + badges.
+    const correctCount = analysis.filter((a) => a.correct).length;
+    await touchStreak(user.id);
+    await awardXp(user.id, XP.QUIZ_ATTEMPT, 'quiz_attempt');
+    if (correctCount > 0) {
+      await awardXp(user.id, XP.CORRECT_ANSWER * correctCount, 'correct_answer');
+    }
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { quizzesTaken: { increment: 1 } },
+    });
+    await recordAnsweredQuestions(user.id, analysis.length);
+
+    if (!existing) {
+      await awardBadge(user.id, 'first_quiz');
+    }
+    if (score === 100) {
+      await awardBadge(user.id, 'perfect_score');
+    }
 
     // Notify about the result, plus an achievement on first pass.
     await createNotification({

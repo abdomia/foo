@@ -52,6 +52,8 @@ export function Sidebar() {
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [level, setLevel] = useState(1);
 
   useEffect(() => {
     if (!user) return;
@@ -65,8 +67,24 @@ export function Sidebar() {
         // ignore
       }
     };
+    const loadGamification = async () => {
+      try {
+        const res = await fetch('/api/user/gamification');
+        const json = await res.json();
+        if (active && json.success) {
+          setStreak(json.data.streak);
+          setLevel(json.data.level);
+        }
+      } catch {
+        // ignore
+      }
+    };
     loadUnread();
-    const interval = setInterval(loadUnread, 60000);
+    loadGamification();
+    const interval = setInterval(() => {
+      loadUnread();
+      loadGamification();
+    }, 60000);
     return () => {
       active = false;
       clearInterval(interval);
@@ -319,10 +337,10 @@ export function Sidebar() {
             )}
 
             <div className="bg-gradient-to-l from-primary/10 to-accent/10 rounded-xl p-4">
-              <p className="text-sm text-text-secondary mb-2">تعلم كل يوم</p>
+              <p className="text-sm text-text-secondary mb-2">المستوى {level} · تعلم كل يوم</p>
               <div className="flex items-center gap-2">
-                <span className="text-2xl"></span>
-                <span className="font-bold text-text-primary">3 أيام متتالية</span>
+                <span className="text-2xl">🔥</span>
+                <span className="font-bold text-text-primary">{streak} أيام متتالية</span>
               </div>
             </div>
           </div>

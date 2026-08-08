@@ -664,6 +664,8 @@ const handleUpdatePdf = async () => {
     const [announcementTitle, setAnnouncementTitle] = useState('');
     const [announcementMessage, setAnnouncementMessage] = useState('');
     const [announcementGrade, setAnnouncementGrade] = useState('');
+    const [announcementTarget, setAnnouncementTarget] = useState<'all' | 'grade' | 'subscribers' | 'custom'>('all');
+    const [announcementSelectedUsers, setAnnouncementSelectedUsers] = useState<string[]>([]);
     const [announcementStatus, setAnnouncementStatus] = useState('');
     const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
 
@@ -677,7 +679,9 @@ const handleUpdatePdf = async () => {
           body: JSON.stringify({
             title: announcementTitle.trim(),
             message: announcementMessage.trim(),
+            targetType: announcementTarget,
             grade: announcementGrade || null,
+            targetUserIds: announcementTarget === 'custom' ? announcementSelectedUsers : [],
           }),
         });
         const data = await res.json();
@@ -685,6 +689,8 @@ const handleUpdatePdf = async () => {
           setAnnouncementStatus('تم الإرسال بنجاح');
           setAnnouncementTitle('');
           setAnnouncementMessage('');
+          setAnnouncementGrade('');
+          setAnnouncementSelectedUsers([]);
         } else {
           setAnnouncementStatus(data.error ?? 'فشل الإرسال');
         }
@@ -794,20 +800,99 @@ const handleUpdatePdf = async () => {
             />
           </div>
           <div>
-            <label className="text-sm font-medium mb-2 block">مستهدف لصف معين؟</label>
-            <select
-              value={announcementGrade}
-              onChange={(e) => setAnnouncementGrade(e.target.value)}
-              className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-            >
-              <option value="">كل الطلاب</option>
-              <option value="third_preparatory">الصف الثالث الاعدادي</option>
-              <option value="first_secondary">الصف الأول الثانوي</option>
-              <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
-              <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
-              <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
-            </select>
+            <label className="text-sm font-medium mb-2 block">الفئة المستهدفة</label>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+              {[
+                { value: 'all' as const, label: 'كل الطلاب' },
+                { value: 'grade' as const, label: 'صف معين' },
+                { value: 'subscribers' as const, label: 'المشتركين فقط' },
+                { value: 'custom' as const, label: 'مجموعة معينة' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    setAnnouncementTarget(opt.value);
+                    if (opt.value !== 'custom') setAnnouncementSelectedUsers([]);
+                  }}
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                    announcementTarget === opt.value
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-card border-border text-foreground hover:bg-muted'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {(announcementTarget === 'grade' || announcementTarget === 'subscribers') && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                {announcementTarget === 'subscribers'
+                  ? 'صف معين من المشتركين؟ (اختياري)'
+                  : 'اختر الصف'}
+              </label>
+              <select
+                value={announcementGrade}
+                onChange={(e) => setAnnouncementGrade(e.target.value)}
+                className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+              >
+                <option value="">
+                  {announcementTarget === 'subscribers' ? 'كل المشتركين' : 'اختر الصف...'}
+                </option>
+                <option value="third_preparatory">الصف الثالث الاعدادي</option>
+                <option value="first_secondary">الصف الأول الثانوي</option>
+                <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
+                <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
+                <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
+              </select>
+            </div>
+          )}
+
+          {announcementTarget === 'custom' && (
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                اختر الطلاب ({announcementSelectedUsers.length} محدد)
+              </label>
+              <div className="max-h-48 overflow-y-auto border border-border rounded-lg divide-y divide-border">
+                {users.length === 0 ? (
+                  <p className="p-4 text-sm text-muted-foreground text-center">
+                    لا يوجد طلاب مسجلون
+                  </p>
+                ) : (
+                  users.map((u) => (
+                    <label
+                      key={u.id}
+                      className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-muted"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={announcementSelectedUsers.includes(u.id)}
+                        onChange={() =>
+                          setAnnouncementSelectedUsers((prev) =>
+                            prev.includes(u.id)
+                              ? prev.filter((id) => id !== u.id)
+                              : [...prev, u.id]
+                          )
+                        }
+                        className="accent-primary"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">{u.name}</p>
+                        <p className="text-xs text-muted-foreground truncate" dir="ltr">{u.email}</p>
+                      </div>
+                      <span className={`text-xs font-medium ${u.isSubscribed ? 'text-success' : 'text-muted-foreground'}`}>
+                        {u.isSubscribed ? 'مشترك' : 'مجاني'}
+                      </span>
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {announcementStatus && (
             <div
               className={`text-sm rounded-lg p-3 ${

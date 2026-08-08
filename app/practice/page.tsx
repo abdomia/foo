@@ -7,15 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { exercises, topics } from '@/lib/data';
 import { cn } from '@/lib/utils';
-import { Target, CheckCircle2, XCircle, Lightbulb, ArrowRight, RotateCcw } from 'lucide-react';
+import { useAuth } from '@/components/AuthProvider';
+import { Target, CheckCircle2, XCircle, Lightbulb, ArrowRight, RotateCcw, Zap } from 'lucide-react';
 
 export default function PracticePage() {
+  const { user } = useAuth();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [completedCount, setCompletedCount] = useState(0);
+  const [xpEarned, setXpEarned] = useState<number | null>(null);
 
   const filteredExercises = selectedTopic 
     ? exercises.filter(e => e.topicId === selectedTopic)
@@ -30,6 +33,15 @@ export default function PracticePage() {
     if (isCorrect) {
       setCompletedCount(prev => prev + 1);
     }
+    if (user) {
+      const earned = isCorrect ? 7 : 5;
+      setXpEarned(earned);
+      fetch('/api/user/practice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ correct: isCorrect }),
+      }).catch(() => {});
+    }
   };
 
   const handleNext = () => {
@@ -38,6 +50,7 @@ export default function PracticePage() {
       setSelectedAnswer(null);
       setShowResult(false);
       setShowHint(false);
+      setXpEarned(null);
     }
   };
 
@@ -47,6 +60,7 @@ export default function PracticePage() {
     setShowResult(false);
     setShowHint(false);
     setCompletedCount(0);
+    setXpEarned(null);
   };
 
   return (
@@ -252,6 +266,12 @@ export default function PracticePage() {
                       <XCircle className="w-6 h-6 text-error" />
                       <span className="font-bold text-error">إجابة خاطئة. حاول مرة أخرى!</span>
                     </>
+                  )}
+                  {xpEarned !== null && user && (
+                    <span className="flex items-center gap-1 text-sm font-bold text-primary mr-auto">
+                      <Zap className="w-4 h-4" />
+                      +{xpEarned} XP
+                    </span>
                   )}
                 </div>
               )}

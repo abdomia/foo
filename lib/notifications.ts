@@ -47,17 +47,22 @@ export async function createManyNotifications(input: {
   });
 }
 
-// Notify all users, optionally scoped to a grade (null grade -> general content).
+// Notify users, optionally scoped to a grade (null grade -> general content),
+// subscribers only, or an explicit set of user ids (custom group).
 export async function notifyAllUsers(input: {
   type: NotificationType;
   title: string;
   body?: string;
   link?: string;
   grade?: string | null;
+  onlySubscribers?: boolean;
+  userIds?: string[];
 }) {
-  const where = input.grade
-    ? { OR: [{ grade: input.grade }, { grade: null }] }
-    : {};
+  const where = {
+    ...(input.grade ? { OR: [{ grade: input.grade }, { grade: null }] } : {}),
+    ...(input.onlySubscribers ? { isSubscribed: true } : {}),
+    ...(input.userIds ? { id: { in: input.userIds } } : {}),
+  };
   const users = await prisma.user.findMany({
     where,
     select: { id: true },

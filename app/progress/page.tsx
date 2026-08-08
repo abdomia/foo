@@ -92,20 +92,34 @@ interface UserStats {
   streak: number;
 }
 
-interface Badge {
+interface GamificationBadge {
   id: string;
+  type: string;
   name: string;
+  description: string;
   icon: string;
-  earned: boolean;
-  earnedDate?: string;
+  awardedAt: string;
 }
 
-const defaultBadges: Badge[] = [
-  { id: 'first-lesson', name: 'البداية', icon: 'Star', earned: false },
-  { id: 'five-exercises', name: 'متمرن', icon: 'Trophy', earned: false },
-  { id: 'week-streak', name: 'سبعة أيام', icon: 'Flame', earned: false },
-  { id: 'first-quiz', name: 'مختبر', icon: 'Target', earned: false },
-  { id: 'master-central', name: 'أستاذ النزعة', icon: 'Crown', earned: false },
+interface GamificationData {
+  level: number;
+  totalXp: number;
+  xpIntoLevel: number;
+  xpForNext: number;
+  streak: number;
+  streakBest: number;
+  questionsAnswered: number;
+  quizzesTaken: number;
+  unitsCompleted: number;
+  badges: GamificationBadge[];
+}
+
+const BADGE_DEFS = [
+  { type: 'first_quiz', name: 'أول اختبار', icon: 'Target', description: 'أجب على أول اختبار في المنصة' },
+  { type: 'streak_7', name: 'سبعة أيام متتالية', icon: 'Flame', description: 'واصل نشاطك 7 أيام متتالية' },
+  { type: 'questions_100', name: '100 سؤال', icon: 'Brain', description: 'أجب على 100 سؤال حتى الآن' },
+  { type: 'first_unit', name: 'أكملت أول وحدة', icon: 'Trophy', description: 'أنهِ جميع دروس أول وحدة' },
+  { type: 'perfect_score', name: 'الدرجة الكاملة', icon: 'Crown', description: 'احصل على 100% في اختبار' },
 ];
 
 const dayNames = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
@@ -122,7 +136,7 @@ export default function ProgressPage() {
     quizzesPassed: 0,
     streak: 0,
   });
-  const [badges, setBadges] = useState<Badge[]>(defaultBadges);
+  const [gamification, setGamification] = useState<GamificationData | null>(null);
   const [weeklyData, setWeeklyData] = useState<{ day: string; progress: number; date: string }[]>([]);
   const [weeklyStats, setWeeklyStats] = useState<{ videosWatched: number; questionsSolved: number; exercisesCompleted: number; thisWeek: WeeklyStats }>({
     videosWatched: 0,
@@ -146,6 +160,7 @@ export default function ProgressPage() {
       fetchTopics();
       fetchWeeklyActivity();
       fetchWeeklyStats();
+      fetchGamification();
     }
   }, [user]);
 
@@ -156,6 +171,7 @@ export default function ProgressPage() {
         fetchTopics();
         fetchWeeklyActivity();
         fetchWeeklyStats();
+        fetchGamification();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -168,6 +184,7 @@ export default function ProgressPage() {
       fetchWeeklyActivity();
       fetchWeeklyStats();
       fetchStats();
+      fetchGamification();
     }, 30000);
     return () => clearInterval(interval);
   }, [user]);
@@ -179,27 +196,23 @@ export default function ProgressPage() {
       const data = await res.json();
       if (data.success) {
         setStats(data.data);
-        updateBadges(data.data);
       }
     } catch (error) {
       console.error('Failed to fetch stats:', error);
     }
   };
 
-  const updateBadges = (data: UserStats) => {
-    const updated = defaultBadges.map(badge => {
-      switch (badge.id) {
-        case 'first-lesson':
-          return { ...badge, earned: data.lessonsCompleted >= 1, earnedDate: data.lessonsCompleted >= 1 ? new Date().toISOString().split('T')[0] : undefined };
-        case 'five-exercises':
-          return { ...badge, earned: data.exercisesCompleted >= 5, earnedDate: data.exercisesCompleted >= 5 ? new Date().toISOString().split('T')[0] : undefined };
-        case 'week-streak':
-          return { ...badge, earned: data.streak >= 7, earnedDate: data.streak >= 7 ? new Date().toISOString().split('T')[0] : undefined };
-        default:
-          return badge;
+  const fetchGamification = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await fetch('/api/user/gamification');
+      const data = await res.json();
+      if (data.success) {
+        setGamification(data.data);
       }
-    });
-    setBadges(updated);
+    } catch (error) {
+      console.error('Failed to fetch gamification:', error);
+    }
   };
 
   const fetchTopics = async () => {
@@ -433,6 +446,71 @@ export default function ProgressPage() {
             </Card>
           </motion.div>
         </div>
+
+        {gamification && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <Card className="overflow-hidden">
+              <CardContent className="p-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-center">
+                  <div className="flex items-center gap-4">
+                    <motion.div
+                      className="w-16 h-16 bg-gradient-to-l from-primary to-accent rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-lg"
+                      whileHover={{ rotate: 6, scale: 1.05 }}
+                    >
+                      {gamification.level}
+                    </motion.div>
+                    <div>
+                      <p className="font-bold text-text-primary">المستوى {gamification.level}</p>
+                      <p className="text-sm text-text-secondary">
+                        {gamification.totalXp} XP إجمالي
+                      </p>
+                    </div>
+                  </div>
+                  <div className="lg:col-span-2">
+                    <div className="flex items-center justify-between mb-2 text-sm">
+                      <span className="text-text-secondary">التقدم للمستوى {gamification.level + 1}</span>
+                      <span className="font-medium text-primary">
+                        {gamification.xpIntoLevel} / {gamification.xpForNext} XP
+                      </span>
+                    </div>
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full bg-gradient-to-l from-primary to-accent rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, (gamification.xpIntoLevel / gamification.xpForNext) * 100)}%` }}
+                        transition={{ duration: 0.8 }}
+                      />
+                    </div>
+                    <p className="text-xs text-text-secondary mt-2">
+                      {Math.max(0, gamification.xpForNext - gamification.xpIntoLevel)} XP متبقي للمستوى التالي
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-text-primary flex items-center justify-center gap-1">
+                        <Flame className="w-5 h-5 text-warning" />
+                        {gamification.streak}
+                      </p>
+                      <p className="text-xs text-text-secondary">أيام متتالية</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-text-primary">{gamification.questionsAnswered}</p>
+                      <p className="text-xs text-text-secondary">سؤال</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-text-primary">{gamification.unitsCompleted}</p>
+                      <p className="text-xs text-text-secondary">وحدات</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -850,78 +928,73 @@ export default function ProgressPage() {
               <div className="flex items-center justify-between">
                 <h2 className="font-bold text-lg text-text-primary">الإنجازات والشارات</h2>
                 <Badge variant="default">
-                  {badges.filter(b => b.earned).length} / {badges.length}
+                  {(gamification?.badges.length ?? 0)} / {BADGE_DEFS.length}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {badges.map((badge, idx) => {
-                  const IconComponent = iconMap[badge.icon] || Award;
-                  const isJustEarned = celebratingBadge === badge.id;
+                {BADGE_DEFS.map((def, idx) => {
+                  const earnedBadge = gamification?.badges.find((b) => b.type === def.type);
+                  const earned = !!earnedBadge;
+                  const IconComponent = iconMap[def.icon] || Award;
+                  const isJustEarned = celebratingBadge === def.type;
 
                   return (
                     <motion.div
-                      key={badge.id}
+                      key={def.type}
                       className={`p-4 rounded-xl text-center transition-all cursor-pointer relative ${
-                        badge.earned
+                        earned
                           ? 'bg-gradient-to-l from-primary/10 to-secondary/10 hover:from-primary/20 hover:to-secondary/20 border-2 border-primary/30'
                           : 'bg-muted opacity-60 hover:opacity-80'
                       }`}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{
-                        opacity: badge.earned ? 1 : 0.6,
-                        scale: isJustEarned ? 1.1 : (badge.earned ? 1 : 0.8),
+                        opacity: earned ? 1 : 0.6,
+                        scale: isJustEarned ? 1.1 : (earned ? 1 : 0.8),
                         boxShadow: isJustEarned ? '0 0 30px rgba(59, 130, 246, 0.5)' : 'none'
                       }}
                       transition={{ delay: 0.8 + idx * 0.1 }}
                       whileHover={{ scale: 1.05 }}
                       onClick={() => {
-                        if (badge.earned) {
-                          setCelebratingBadge(badge.id);
+                        if (earned) {
+                          setCelebratingBadge(def.type);
                           setShowBadgeCelebration(true);
                           setTimeout(() => {
                             setShowBadgeCelebration(false);
                             setCelebratingBadge(null);
                           }, 3000);
                         } else {
-                          const progress = badge.id === 'first-lesson' ? stats.lessonsCompleted :
-                                         badge.id === 'five-exercises' ? stats.exercisesCompleted :
-                                         badge.id === 'week-streak' ? stats.streak : 0;
-                          alert(`يحتاج تحصل على شارة "${badge.name}" ${badge.id === 'first-lesson' ? 'إكمال أول درس' :
-                                 badge.id === 'five-exercises' ? 'حل 5 تمارين' :
-                                 badge.id === 'week-streak' ? '7 أيام متتالية' : 'إكمال متطلبات الشارة'} - تقدمك الحالي: ${progress}`);
+                          alert(def.description);
                         }
                       }}
                     >
-                      {badge.earned && (
+                      {earned && (
                         <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
                           <CheckCircle className="w-4 h-4 text-white" />
                         </div>
                       )}
                       <motion.div
                         className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-3 ${
-                          badge.earned ? 'bg-primary/20 text-primary' : 'bg-muted text-text-secondary'
+                          earned ? 'bg-primary/20 text-primary' : 'bg-muted text-text-secondary'
                         }`}
-                        whileHover={{ rotate: badge.earned ? 360 : 0 }}
+                        whileHover={{ rotate: earned ? 360 : 0 }}
                         transition={{ duration: 0.5 }}
                         animate={isJustEarned ? { rotate: [0, 360, 0] } : {}}
                       >
                         <IconComponent className="w-8 h-8" />
                       </motion.div>
-                      <p className="font-bold text-text-primary mb-1">{badge.name}</p>
-                      {badge.earned && badge.earnedDate && (
+                      <p className="font-bold text-text-primary mb-1">{def.name}</p>
+                      {earned && (
                         <p className="text-xs text-green-600 font-medium">
                           ✓ تم الحصول عليها
                         </p>
                       )}
-                      {!badge.earned && (
+                      {!earned && (
                         <p className="text-xs text-text-secondary">
-                          {badge.id === 'first-lesson' && `${stats.lessonsCompleted}/1`}
-                          {badge.id === 'five-exercises' && `${stats.exercisesCompleted}/5`}
-                          {badge.id === 'week-streak' && `${stats.streak}/7`}
-                          {badge.id === 'first-quiz' && `${stats.quizzesPassed}/1`}
-                          {!['first-lesson', 'five-exercises', 'week-streak', 'first-quiz'].includes(badge.id) && 'قيد الإنجاز'}
+                          {def.type === 'questions_100' && `${gamification?.questionsAnswered ?? 0}/100`}
+                          {def.type === 'streak_7' && `${gamification?.streak ?? 0}/7`}
+                          {['first_quiz', 'first_unit', 'perfect_score'].includes(def.type) && 'قيد الإنجاز'}
                         </p>
                       )}
                     </motion.div>
@@ -930,7 +1003,7 @@ export default function ProgressPage() {
               </div>
               <div className="mt-4 flex items-center justify-center gap-4">
                 <button
-                  onClick={() => fetchStats()}
+                  onClick={() => fetchGamification()}
                   className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg transition-colors"
                 >
                   <RefreshCw className="w-4 h-4" />
@@ -942,6 +1015,7 @@ export default function ProgressPage() {
                     fetchTopics();
                     fetchWeeklyActivity();
                     fetchWeeklyStats();
+                    fetchGamification();
                   }}
                   className="flex items-center gap-2 px-4 py-2 bg-secondary/10 hover:bg-secondary/20 text-secondary rounded-lg transition-colors"
                 >
