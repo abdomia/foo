@@ -199,7 +199,7 @@ model UserLessonProgress {
   timeSpentSeconds Int      @default(0)
   completed        Boolean  @default(false)
   completedAt      DateTime?
-  updatedAt        DateTime @updatedAt
+  updatedAt        DateTime @default(now()) @updatedAt
 
   @@unique([userId, lessonId])
 }
