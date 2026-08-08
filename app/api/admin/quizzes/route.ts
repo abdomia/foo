@@ -1,0 +1,90 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
+import { adminQuizSchema } from '@/lib/validation';
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const grade = searchParams.get('grade');
+
+    const where: any = {};
+    if (grade) {
+      where.OR = [
+        { grade: grade },
+        { grade: null },
+      ];
+    }
+
+    const quizzes = await prisma.quiz.findMany({
+      where,
+      include: {
+        topic: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        questions: {
+          orderBy: { order: 'asc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return NextResponse.json({ success: true, data: quizzes });
+  } catch (error) {
+    console.error('Failed to fetch quizzes:', error);
+    return NextResponse.json({ success: false, error: 'Failed to fetch quizzes' }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const admin = await getSessionUser();
+  if (!admin) return unauthorized();
+  if (!admin.isAdmin) return forbidden();
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: 'بيانات غير صالحة' }, { status: 400 });
+  }
+
+  const parsed = adminQuizSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ success: false, error: 'بيانات غير صالحة' }, { status: 400 });
+  }
+
+  try {
+    const { title, description, topicId, timeLimit, passingScore = 70, questions, grade } = parsed.data;
+
+    const quiz = await prisma.quiz.create({
+      data: {
+        title,
+        description,
+        grade: grade ?? null,
+        topicId,
+        timeLimit: timeLimit ?? null,
+        passingScore,
+        questions: {
+          create: questions.map((q, index) => ({
+            question: q.question,
+            type: q.type || 'multiple-choice',
+            options: q.options || [],
+            correctAnswer: q.correctAnswer,
+            order: index,
+          })),
+        },
+      },
+      include: {
+        questions: true,
+      },
+    });
+
+    return NextResponse.json({ success: true, data: quiz });
+  } catch (error) {
+    console.error('Failed to create quiz:', error);
+    return NextResponse.json({ success: false, error: 'Failed to create quiz' }, { status: 500 });
+  }
+}

@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id                 String             @id @default(cuid())
+  name               String
+  email              String             @unique
+  password           String
+  phone              String
+  parentPhone        String
+  avatar             String?
+  grade              String?
+  isSubscribed       Boolean            @default(false)
+  subscriptionPlan   String?
+  subscriptionExpiry DateTime?
+  isAdmin            Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  payments           Payment[]
+  quizProgress       UserQuizProgress[]
+  lessonProgress     UserLessonProgress[]
+  sessions           Session[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model SiteSetting {
+  id    String @id @default("platform")
+  landingVideoUrl String @default("k3sRZvSlBNE")
+}
+
+model Topic {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  grade       String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lessons     Lesson[]
+  pdfs        Pdf[]
+  quizzes     Quiz[]
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  videoUrl    String
+  duration    String
+  type        String   @default("explanation")
+  grade       String?
+  order       Int      @default(0)
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  progress     UserLessonProgress[]
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  userId         String
+  amount         Int
+  plan           String
+  paymentMethod  String   @default("vodafone_cash")
+  transactionId  String?
+  status         String   @default("pending")
+  vodafoneRef    String?
+  activationCode String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SubscriptionCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  plan      String
+  isUsed    Boolean   @default(false)
+  usedBy    String?
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
+
+model Pdf {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  fileUrl     String
+  category    String   @default("explanation")
+  grade       String?
+  order       Int      @default(0)
+  topicId     String?
+  topic       Topic?   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Quiz {
+  id           String             @id @default(cuid())
+  title        String
+  description  String?
+  grade        String?
+  topicId      String
+  topic        Topic              @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  timeLimit    Int?
+  passingScore Int                @default(70)
+  questions    Question[]
+  progress     UserQuizProgress[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  question      String
+  type          String   @default("multiple-choice")
+  options       String[]
+  correctAnswer String
+  quizId        String
+  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model UserQuizProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score       Int
+  passed      Boolean
+  completedAt DateTime @default(now())
+
+  @@unique([userId, quizId])
+}
+
+model UserLessonProgress {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId     String
+  lesson       Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  progress    Int      @default(0)
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+}
+
+model Advice {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  videoUrl    String?
+  type        String   @default("text")
+  grade       String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
