@@ -11,6 +11,7 @@ import { QuizFormModal, EditQuizModal } from '@/components/admin/QuizModals';
 import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
 import QuestionBankSection from '@/components/admin/QuestionBankSection';
 import GenerateQuizModal from '@/components/admin/GenerateQuizModal';
+import DashboardOverview from '@/components/admin/DashboardOverview';
 import { CLASS_OPTIONS, getClassByKey } from '@/lib/classes';
 import {
   Video,
@@ -36,6 +37,7 @@ import {
   Sparkles,
   Bell,
   Send,
+  LayoutDashboard,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -91,7 +93,7 @@ export default function AdminPage() {
   const [showCodeForm, setShowCodeForm] = useState(false);
   const [codeForm, setCodeForm] = useState({ plan: 'monthly', durationDays: '30' });
   const [users, setUsers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'content' | 'users' | 'pdfs' | 'quizzes' | 'questionBank' | 'advice' | 'settings'>('content');
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'users' | 'pdfs' | 'quizzes' | 'questionBank' | 'advice' | 'settings'>('overview');
   const [classFilter, setClassFilter] = useState<string>('');
 
   const [topicForm, setTopicForm] = useState({
@@ -970,6 +972,7 @@ const handleUpdatePdf = async () => {
           <div>
             <h1 className="text-3xl font-bold text-foreground">لوحة التحكم</h1>
             <p className="text-muted-foreground mt-1">
+              {activeTab === 'overview' && 'نظرة عامة على المنصة'}
               {activeTab === 'content' && 'إدارة المحتوى التعليمي'}
               {activeTab === 'users' && 'إدارة المستخدمين'}
               {activeTab === 'pdfs' && 'إدارة ملفات PDF'}
@@ -999,6 +1002,17 @@ const handleUpdatePdf = async () => {
         </div>
 
         <div className="flex gap-2 mb-6 bg-muted p-1 rounded-xl w-fit">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'overview'
+                ? 'bg-primary text-white'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            نظرة عامة
+          </button>
           <button
             onClick={() => setActiveTab('content')}
             className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
@@ -1080,6 +1094,8 @@ const handleUpdatePdf = async () => {
             الإعدادات
           </button>
         </div>
+
+        {activeTab === 'overview' && <DashboardOverview />}
 
         {activeTab === 'content' && (
         <div className="grid gap-6">
