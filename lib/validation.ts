@@ -22,6 +22,8 @@ export const activateCodeSchema = z.object({
 export const lessonProgressSchema = z.object({
   lessonId: z.string().min(1),
   progress: z.number().int().min(0).max(100).optional(),
+  watchSeconds: z.number().int().min(0).optional(),
+  timeSpentSeconds: z.number().int().min(0).optional(),
   completed: z.boolean().optional(),
 });
 
@@ -29,6 +31,14 @@ export const quizResultSchema = z.object({
   quizId: z.string().min(1),
   score: z.number().int().min(0).max(100),
   passed: z.boolean(),
+  answers: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        selected: z.string().nullable().optional(),
+      })
+    )
+    .optional(),
 });
 
 export const planIdSchema = z.enum(['monthly', 'semester', 'yearly']);
@@ -78,6 +88,18 @@ export const adminLessonSchema = z.object({
   duration: z.string().trim().max(20).optional(),
   type: z.string().trim().max(40).optional(),
   accessType: accessTypeSchema,
+  summary: z.string().max(5000).optional().nullable(),
+  keyPoints: z.array(z.string().trim().min(1).max(500)).max(30).optional(),
+  files: z
+    .array(
+      z.object({
+        title: z.string().trim().min(1).max(200),
+        url: z.string().trim().min(1).max(1000),
+        type: z.string().trim().max(40).optional(),
+      })
+    )
+    .max(20)
+    .optional(),
   grade: z.string().trim().max(60).optional().nullable(),
   order: z.number().int().min(0).optional(),
   topicId: z.string().min(1),
@@ -99,6 +121,8 @@ export const adminQuizSchema = z.object({
         type: z.string().trim().default('multiple-choice'),
         options: z.array(z.string()).min(1),
         correctAnswer: z.string().trim().min(1),
+        difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
+        explanation: z.string().max(2000).optional().nullable(),
         order: z.number().int().min(0).optional(),
       })
     )

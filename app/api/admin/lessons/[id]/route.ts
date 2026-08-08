@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, description, videoUrl, duration, order, type, grade, accessType } = body;
+    const { title, description, videoUrl, duration, order, type, grade, accessType, summary, keyPoints, files } = body;
 
     const lesson = await prisma.lesson.update({
       where: { id },
@@ -29,6 +29,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         order: order ?? undefined,
         type: type ?? undefined,
         accessType: accessType ?? undefined,
+        summary: summary ?? undefined,
+        keyPoints: keyPoints !== undefined ? keyPoints : undefined,
+        files: files !== undefined ? files : undefined,
       },
     });
 

@@ -80,6 +80,8 @@ export async function POST(request: Request) {
             type: q.type || 'multiple-choice',
             options: q.options || [],
             correctAnswer: q.correctAnswer,
+            difficulty: q.difficulty || 'medium',
+            explanation: q.explanation ?? null,
             order: index,
           })),
         },

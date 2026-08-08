@@ -13,7 +13,6 @@ import { Lesson, Topic } from '@/lib/data';
 import { getExercisesByTopic } from '@/lib/data';
 import { Play, Clock, CheckCircle2, ArrowRight, X, BarChart3, TrendingUp, Crown, Lock, BookOpen, FileText, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { VideoPlayer } from '@/components/video/VideoPlayer';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
@@ -137,26 +136,7 @@ if (isLessonLocked(item)) {
             setShowSubscriptionModal(true);
             return;
           }
-          let videoUrl = item.videoUrl;
-          if (videoUrl && videoUrl.includes('youtube.com/watch')) {
-            const videoId = new URL(videoUrl).searchParams.get('v');
-            if (videoId) {
-              videoUrl = `https://www.youtube.com/embed/${videoId}`;
-            }
-          }
-          setSelectedLesson({ ...item, videoUrl });
-          
-          if (item.id) {
-            fetch('/api/user/lesson-progress', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                lessonId: item.id,
-                progress: 50,
-                completed: false,
-              }),
-            }).catch(err => console.error('Failed to track lesson progress:', err));
-          }
+          router.push(`/lesson/${item.id}`);
         };
 
   if (isLoading) {
@@ -384,24 +364,15 @@ if (isLessonLocked(item)) {
                 <X className="w-5 h-5 text-text-secondary" />
               </button>
             </div>
-            <VideoPlayer
-              videoUrl={selectedLesson.videoUrl}
-              lessonId={selectedLesson.id}
-              title={selectedLesson.title}
-              onComplete={() => {
-                setSelectedLesson(null);
-                fetchTopics();
-              }}
-            />
             <div className="p-6">
               <h3 className="font-bold text-xl text-text-primary mb-2">{selectedLesson.title}</h3>
               <p className="text-text-secondary mb-4">{selectedLesson.description}</p>
-              <div className="flex items-center gap-4">
-                <Badge variant="secondary" className="gap-1">
-                  <Clock className="w-3 h-3" />
-                  {selectedLesson.duration}
-                </Badge>
-              </div>
+              <Link href={`/lesson/${selectedLesson.id}`}>
+                <Button className="gap-2">
+                  <Play className="w-4 h-4" />
+                  فتح الدرس
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

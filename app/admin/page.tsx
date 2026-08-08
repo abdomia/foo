@@ -44,6 +44,9 @@ interface Lesson {
   order: number;
   type?: string;
   accessType?: string;
+  summary?: string | null;
+  keyPoints?: string[] | string;
+  files?: { title: string; url: string; type?: string }[] | string;
 }
 
 interface Topic {
@@ -99,6 +102,9 @@ export default function AdminPage() {
     duration: '10:00',
     type: 'explanation',
     accessType: 'FREE',
+    summary: '',
+    keyPoints: '',
+    files: '',
     grade: '',
   });
 
@@ -328,16 +334,35 @@ export default function AdminPage() {
   const handleCreateLesson = async () => {
     if (!selectedTopicId) return;
     try {
+      const payload = {
+        ...lessonForm,
+        summary: lessonForm.summary || null,
+        keyPoints: lessonForm.keyPoints
+          ? lessonForm.keyPoints.split('\n').map((s: string) => s.trim()).filter(Boolean)
+          : [],
+        files: lessonForm.files
+          ? lessonForm.files
+              .split('\n')
+              .map((line: string) => line.trim())
+              .filter(Boolean)
+              .map((line: string) => {
+                const sep = line.includes('|') ? line.indexOf('|') : line.lastIndexOf(' ');
+                if (sep === -1) return { title: line, url: line };
+                return { title: line.slice(0, sep).trim(), url: line.slice(sep + 1).trim() };
+              })
+          : [],
+        topicId: selectedTopicId,
+      };
       const res = await fetch('/api/admin/lessons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...lessonForm, topicId: selectedTopicId }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
         fetchTopics();
         setShowLessonForm(false);
-        setLessonForm({ title: '', description: '', videoUrl: '', duration: '10:00', type: 'explanation', accessType: 'FREE', grade: '' });
+        setLessonForm({ title: '', description: '', videoUrl: '', duration: '10:00', type: 'explanation', accessType: 'FREE', summary: '', keyPoints: '', files: '', grade: '' });
       }
     } catch (error) {
       console.error('Failed to create lesson:', error);
@@ -347,10 +372,30 @@ export default function AdminPage() {
   const handleUpdateLesson = async () => {
     if (!editingLesson) return;
     try {
+      const payload = {
+        ...editingLesson,
+        summary: editingLesson.summary || null,
+        keyPoints:
+          typeof editingLesson.keyPoints === 'string'
+            ? editingLesson.keyPoints.split('\n').map((s: string) => s.trim()).filter(Boolean)
+            : editingLesson.keyPoints,
+        files:
+          typeof editingLesson.files === 'string'
+            ? editingLesson.files
+                .split('\n')
+                .map((line: string) => line.trim())
+                .filter(Boolean)
+                .map((line: string) => {
+                  const sep = line.includes('|') ? line.indexOf('|') : line.lastIndexOf(' ');
+                  if (sep === -1) return { title: line, url: line };
+                  return { title: line.slice(0, sep).trim(), url: line.slice(sep + 1).trim() };
+                })
+            : editingLesson.files,
+      };
       const res = await fetch(`/api/admin/lessons/${editingLesson.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingLesson),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
@@ -1575,6 +1620,44 @@ const handleUpdatePdf = async () => {
                 onChange={(v) => setLessonForm({ ...lessonForm, accessType: v })}
               />
               <div>
+                <label className="text-sm font-medium mb-2 block">ملخص الدرس (اختياري)</label>
+                <textarea
+                  value={lessonForm.summary}
+                  onChange={(e) =>
+                    setLessonForm({ ...lessonForm, summary: e.target.value })
+                  }
+                  placeholder="ملخص قصير يظهر بعد الفيديو"
+                  rows={3}
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">نقاط مهمة (سطر لكل نقطة)</label>
+                <textarea
+                  value={lessonForm.keyPoints}
+                  onChange={(e) =>
+                    setLessonForm({ ...lessonForm, keyPoints: e.target.value })
+                  }
+                  placeholder={'المتوسط الحسابي = مجموع القيم ÷ عددها\nالترتيب مهم عند إيجاد الوسيط'}
+                  rows={3}
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  ملفات الدرس (سطر لكل ملف: العنوان | الرابط)
+                </label>
+                <textarea
+                  value={lessonForm.files}
+                  onChange={(e) =>
+                    setLessonForm({ ...lessonForm, files: e.target.value })
+                  }
+                  placeholder={'ورقة العمل | https://example.com/work.pdf'}
+                  rows={2}
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                />
+              </div>
+              <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
                 <select
                   value={lessonForm.grade || ''}
@@ -1672,6 +1755,51 @@ const handleUpdatePdf = async () => {
                 value={editingLesson.accessType || 'FREE'}
                 onChange={(v) => setEditingLesson({ ...editingLesson, accessType: v })}
               />
+              <div>
+                <label className="text-sm font-medium mb-2 block">ملخص الدرس (اختياري)</label>
+                <textarea
+                  value={editingLesson.summary || ''}
+                  onChange={(e) =>
+                    setEditingLesson({ ...editingLesson, summary: e.target.value })
+                  }
+                  rows={3}
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">نقاط مهمة (سطر لكل نقطة)</label>
+                <textarea
+                  value={
+                    Array.isArray(editingLesson.keyPoints)
+                      ? editingLesson.keyPoints.join('\n')
+                      : editingLesson.keyPoints || ''
+                  }
+                  onChange={(e) =>
+                    setEditingLesson({ ...editingLesson, keyPoints: e.target.value })
+                  }
+                  rows={3}
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  ملفات الدرس (سطر لكل ملف: العنوان | الرابط)
+                </label>
+                <textarea
+                  value={
+                    Array.isArray(editingLesson.files)
+                      ? editingLesson.files
+                          .map((f: { title: string; url: string }) => `${f.title} | ${f.url}`)
+                          .join('\n')
+                      : editingLesson.files || ''
+                  }
+                  onChange={(e) =>
+                    setEditingLesson({ ...editingLesson, files: e.target.value })
+                  }
+                  rows={2}
+                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                />
+              </div>
               <div>
                 <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
                 <select

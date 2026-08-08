@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { title, description = '', videoUrl, duration = '00:00', topicId, order = 0, type = 'explanation', grade = null, accessType = 'FREE' } = parsed.data;
+    const { title, description = '', videoUrl, duration = '00:00', topicId, order = 0, type = 'explanation', grade = null, accessType = 'FREE', summary = null, keyPoints = [], files = [] } = parsed.data;
 
     const lesson = await prisma.lesson.create({
       data: {
@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
         order,
         type,
         accessType,
+        summary,
+        keyPoints: keyPoints.length > 0 ? keyPoints : undefined,
+        files: files.length > 0 ? files : undefined,
       },
     });
 

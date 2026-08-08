@@ -39,6 +39,8 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
           type: 'multiple-choice', 
           options: ['', '', '', ''], 
           correctAnswer: '',
+          difficulty: 'medium',
+          explanation: '',
           imageUrl: '' // Add image URL field
         },
       ],
@@ -187,6 +189,21 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
                   <option value="multiple-choice">اختيار من متعدد</option>
                   <option value="true-false">صح أو خطأ</option>
                 </select>
+                <select
+                  value={q.difficulty || 'medium'}
+                  onChange={(e) => updateQuestion(index, 'difficulty', e.target.value)}
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground mb-2"
+                >
+                  <option value="easy">سهل</option>
+                  <option value="medium">متوسط</option>
+                  <option value="hard">صعب</option>
+                </select>
+                <Input
+                  value={q.explanation || ''}
+                  onChange={(e) => updateQuestion(index, 'explanation', e.target.value)}
+                  placeholder="شرح الإجابة (يظهر بعد الاختبار)"
+                  className="bg-card border-border text-foreground mb-2"
+                />
   {q.type === 'multiple-choice' && (
     <>
       <div className="mb-3">
@@ -346,7 +363,7 @@ export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizM
               <label className="text-sm font-medium">الأسئلة</label>
               <Button
                 type="button"
-                onClick={() => setEditingQuiz({ ...editingQuiz, questions: [...editingQuiz.questions, { question: '', type: 'multiple-choice', options: ['', '', '', ''], correctAnswer: '', order: editingQuiz.questions.length }] })}
+                onClick={() => setEditingQuiz({ ...editingQuiz, questions: [...editingQuiz.questions, { question: '', type: 'multiple-choice', options: ['', '', '', ''], correctAnswer: '', difficulty: 'medium', explanation: '', order: editingQuiz.questions.length }] })}
                 size="sm"
                 variant="outline"
                 className="gap-2"
@@ -377,6 +394,21 @@ export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizM
                   <option value="multiple-choice">اختيار من متعدد</option>
                   <option value="true-false">صح أو خطأ</option>
                 </select>
+                <select
+                  value={q.difficulty || 'medium'}
+                  onChange={(e) => { const nq = [...editingQuiz.questions]; nq[index].difficulty = e.target.value; setEditingQuiz({ ...editingQuiz, questions: nq }); }}
+                  className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground mb-2"
+                >
+                  <option value="easy">سهل</option>
+                  <option value="medium">متوسط</option>
+                  <option value="hard">صعب</option>
+                </select>
+                <Input
+                  value={q.explanation || ''}
+                  onChange={(e) => { const nq = [...editingQuiz.questions]; nq[index].explanation = e.target.value; setEditingQuiz({ ...editingQuiz, questions: nq }); }}
+                  placeholder="شرح الإجابة (يظهر بعد الاختبار)"
+                  className="bg-card border-border text-foreground mb-2"
+                />
                 {q.type === 'multiple-choice' && (
                   <div className="space-y-2">
                     {(q.options || []).map((opt: string, optIndex: number) => (

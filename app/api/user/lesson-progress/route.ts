@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { lessonId, progress = 0, completed = false } = parsed.data;
+    const { lessonId, progress = 0, watchSeconds, timeSpentSeconds = 0, completed = false } = parsed.data;
 
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
@@ -50,6 +50,8 @@ export async function POST(request: NextRequest) {
         where: { id: existingProgress.id },
         data: {
           progress: Math.max(existingProgress.progress || 0, progress),
+          watchSeconds: watchSeconds !== undefined ? watchSeconds : existingProgress.watchSeconds,
+          timeSpentSeconds: (existingProgress.timeSpentSeconds || 0) + timeSpentSeconds,
           completed: completed || existingProgress.completed || false,
           completedAt: completed ? new Date() : existingProgress.completedAt,
         },
@@ -62,6 +64,8 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         lessonId,
         progress,
+        watchSeconds: watchSeconds ?? 0,
+        timeSpentSeconds,
         completed,
         completedAt: completed ? new Date() : null,
       },

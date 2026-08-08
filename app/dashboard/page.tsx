@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -8,43 +8,56 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useAuth } from '@/components/AuthProvider';
 import { getClassByKey } from '@/lib/classes';
-import { userProgress } from '@/lib/data';
+import { formatMinutes } from '@/lib/learning';
 import Image from 'next/image';
 import {
-  TrendingUp,
-  Clock,
-  Trophy,
-  Play,
   BookOpen,
   Target,
-  BarChart3,
+  Clock,
+  Flame,
+  Trophy,
+  Play,
   Crown,
   Sparkles,
-  Flame,
-  MessageCircle
+  MessageCircle,
+  TrendingUp,
+  BarChart3,
+  Star,
+  Award,
+  CheckCircle2,
+  GraduationCap,
+  Zap,
+  ListChecks,
+  ChevronLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-interface Lesson {
-  id: string;
-  title: string;
-  description: string;
-  videoUrl: string;
-  duration: string;
-  completed: boolean;
-  topicId: string;
-  type?: 'explanation' | 'practice';
-}
-
-interface Topic {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  progress: number;
-  lessons: Lesson[];
+interface ProgressStats {
+  lessonsCompleted: number;
+  totalLessons: number;
+  completionPercent: number;
+  exercisesCompleted: number;
+  quizzesTaken: number;
+  quizzesPassed: number;
+  averageQuizScore: number;
+  bestQuizScore: number;
+  totalHours: number;
+  learningMinutes: number;
+  streak: number;
+  xp: number;
+  badges: { id: string; name: string; icon: string; earned: boolean; earnedDate?: string }[];
+  lastLesson: {
+    lessonId: string;
+    title: string;
+    progress: number;
+    watchSeconds: number;
+    completed: boolean;
+    updatedAt: string;
+  } | null;
+  recentActivity: { id: string; type: 'lesson' | 'quiz'; title: string; date: string; score?: number }[];
 }
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -53,6 +66,12 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Trophy,
   Sparkles,
   Crown,
+  Star,
+  Award,
+  Target,
+  CheckCircle2,
+  Flame,
+  GraduationCap,
   Dice5: () => (
     <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="2" y="2" width="20" height="20" rx="4" />
@@ -75,27 +94,17 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 export default function Dashboard() {
   const router = useRouter();
   const { user, isLoading } = useAuth();
-  const [stats, setStats] = useState({
-    lessonsCompleted: 0,
-    exercisesCompleted: 0,
-    totalHours: 0,
-    quizzesPassed: 0,
-    streak: 0,
-  });
+  const [stats, setStats] = useState<ProgressStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+
   const activeClassKey = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search).get('class')
     : null;
 
   const activeClass = getClassByKey(activeClassKey);
-
   const isSubscribed = user?.isSubscribed;
 
-  useEffect(() => {
-    fetchStats();
-  }, [user]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user) {
       setIsLoadingStats(false);
       return;
@@ -111,9 +120,13 @@ export default function Dashboard() {
     } finally {
       setIsLoadingStats(false);
     }
-  };
+  }, [user]);
 
-    useEffect(() => {
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
     if (!isLoading && !user) {
       router.push('/auth/login');
     }
@@ -181,6 +194,18 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {stats && stats.xp > 0 && (
+              <Badge variant="secondary" className="gap-1 px-3 py-1.5">
+                <Zap className="w-4 h-4 text-warning" />
+                {stats.xp} XP
+              </Badge>
+            )}
+            {stats && stats.streak > 0 && (
+              <Badge variant="secondary" className="gap-1 px-3 py-1.5">
+                <Flame className="w-4 h-4 text-warning" />
+                {stats.streak} يوم متتالي
+              </Badge>
+            )}
             {isSubscribed ? (
               <Link href="/lessons">
                 <Button className="gap-2">
@@ -213,8 +238,7 @@ export default function Dashboard() {
                   <p className="text-text-secondary mb-4">
                     {user
                       ? 'لديك حساب! اشترك الآن لمشاهدة جميع الفيديوهات التعليمية'
-                      : 'سجل حسابك واشترك للحصول على وصول كامل لجميع الدروس والتمارين'
-                    }
+                      : 'سجل حسابك واشترك للحصول على وصول كامل لجميع الدروس والتمارين'}
                   </p>
                   <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                     {!user && (
@@ -240,177 +264,148 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {stats?.lastLesson && !stats.lastLesson.completed && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Card className="bg-gradient-to-br from-primary/10 to-accent/10 border-primary/20 overflow-hidden">
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row md:items-center gap-6">
+                  <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+                    <BookOpen className="w-8 h-8 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="text-lg font-bold text-text-primary">استكمال التعلم</h3>
+                      {stats.lastLesson.progress > 0 && (
+                        <span className="text-xs text-text-secondary">{stats.lastLesson.progress}%</span>
+                      )}
+                    </div>
+                    <p className="text-text-secondary mb-3">{stats.lastLesson.title}</p>
+                    <ProgressBar value={stats.lastLesson.progress} size="sm" className="max-w-md" />
+                  </div>
+                  <Link href={`/lesson/${stats.lastLesson.lessonId}`}>
+                    <Button className="gap-2 px-6 py-6 text-lg">
+                      <Play className="w-5 h-5" />
+                      استكمال الدرس
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
         <motion.div
-          className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card className="bg-gradient-to-br from-primary to-primary/80 text-white border-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 -translate-x-1/2" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-white/70 text-sm mb-1">الدروس المكتملة</p>
-                    <motion.p
-                      className="text-4xl font-bold"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      {isLoadingStats ? (
-                        <span className="animate-pulse bg-white/20 h-10 w-16 inline-block rounded" />
-                      ) : (
-                        stats.lessonsCompleted
-                      )}
-                    </motion.p>
-                  </div>
-                  <motion.div
-                    className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                  >
-                    <BookOpen className="w-6 h-6" />
-                  </motion.div>
+          <Card className="bg-gradient-to-br from-primary to-primary/80 text-white border-0">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/70 text-sm mb-1">الدروس المكتملة</p>
+                  <p className="text-3xl font-bold">
+                    {isLoadingStats ? '...' : `${stats?.lessonsCompleted ?? 0}`}
+                  </p>
+                  <p className="text-white/60 text-xs mt-1">من أصل {stats?.totalLessons ?? 0} درس</p>
                 </div>
-                <motion.div
-                  className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.5, duration: 0.8 }}
-                >
-                  <motion.div
-                    className="h-full bg-white rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stats.lessonsCompleted / 10) * 100, 100)}%` }}
-                    transition={{ delay: 0.3, duration: 1 }}
-                  />
-                </motion.div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+              </div>
+              <ProgressBar value={stats?.completionPercent ?? 0} size="sm" className="mt-4" />
+            </CardContent>
+          </Card>
 
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <Card className="bg-gradient-to-br from-primary/90 to-primary/60 text-white border-0 overflow-hidden relative">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-white/70 text-sm mb-1">التمارين المنجزة</p>
-                    <motion.p
-                      className="text-4xl font-bold"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      {isLoadingStats ? (
-                        <span className="animate-pulse bg-white/20 h-10 w-16 inline-block rounded" />
-                      ) : (
-                        stats.exercisesCompleted
-                      )}
-                    </motion.p>
-                  </div>
-                  <motion.div
-                    className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                  >
-                    <Target className="w-6 h-6" />
-                  </motion.div>
+          <Card className="bg-gradient-to-br from-secondary to-secondary/80 text-white border-0">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/70 text-sm mb-1">نسبة الإنجاز</p>
+                  <p className="text-3xl font-bold">
+                    {isLoadingStats ? '...' : `${stats?.completionPercent ?? 0}%`}
+                  </p>
+                  <p className="text-white/60 text-xs mt-1">من المنهج</p>
                 </div>
-                <motion.div
-                  className="mt-4 h-1.5 bg-white/20 rounded-full overflow-hidden"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: 1 }}
-                  transition={{ delay: 0.6, duration: 0.8 }}
-                >
-                  <motion.div
-                    className="h-full bg-white rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((stats.exercisesCompleted / 20) * 100, 100)}%` }}
-                    transition={{ delay: 0.4, duration: 1 }}
-                  />
-                </motion.div>
-              </CardContent>
-            </Card>
-          </motion.div>
+                <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center">
+                  <Target className="w-6 h-6" />
+                </div>
+              </div>
+              <ProgressBar value={stats?.completionPercent ?? 0} size="sm" className="mt-4" />
+            </CardContent>
+          </Card>
 
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            <Card className="bg-gradient-to-br from-accent to-accent/80 text-white border-0 overflow-hidden relative">
-              <div className="absolute top-0 left-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 -translate-x-1/2" />
-              <CardContent className="p-6 relative z-10">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-white/70 text-sm mb-1">ساعات التعلم</p>
-                    <motion.p
-                      className="text-4xl font-bold"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      {isLoadingStats ? (
-                        <span className="animate-pulse bg-white/20 h-10 w-16 inline-block rounded" />
-                      ) : (
-                        stats.totalHours
-                      )}
-                    </motion.p>
-                  </div>
-                  <motion.div
-                    className="w-12 h-12 bg-white/15 rounded-xl flex items-center justify-center"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                  >
-                    <Clock className="w-6 h-6" />
-                  </motion.div>
+          <Card className="bg-gradient-to-br from-accent to-accent/80 text-white border-0">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/70 text-sm mb-1">الاختبارات</p>
+                  <p className="text-3xl font-bold">
+                    {isLoadingStats ? '...' : `${stats?.quizzesTaken ?? 0}`}
+                  </p>
+                  <p className="text-white/60 text-xs mt-1">
+                    متوسط الدرجات {stats?.averageQuizScore ?? 0}%
+                  </p>
                 </div>
-                {stats.streak > 0 && (
-                  <motion.div
-                    className="flex items-center gap-1 mt-3 text-white/80 text-sm"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <Flame className="w-4 h-4" />
-                    <span>{stats.streak} أيام متتالية</span>
-                  </motion.div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+                <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center">
+                  <ListChecks className="w-6 h-6" />
+                </div>
+              </div>
+              <ProgressBar
+                value={stats?.averageQuizScore ?? 0}
+                size="sm"
+                className="mt-4"
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-success to-success/80 text-white border-0">
+            <CardContent className="p-5">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/70 text-sm mb-1">وقت التعلم</p>
+                  <p className="text-3xl font-bold">
+                    {isLoadingStats ? '...' : formatMinutes(stats?.learningMinutes ?? 0)}
+                  </p>
+                  <p className="text-white/60 text-xs mt-1">
+                    {stats?.totalHours ?? 0} ساعة تقريباً
+                  </p>
+                </div>
+                <div className="w-11 h-11 bg-white/15 rounded-xl flex items-center justify-center">
+                  <Clock className="w-6 h-6" />
+                </div>
+              </div>
+              <div className="flex items-center gap-2 mt-4 text-white/80 text-sm">
+                <Flame className="w-4 h-4" />
+                <span>{stats?.streak ?? 0} أيام متتالية</span>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
 
-        {/* <motion.div */}
-        {/*   initial={{ opacity: 0, y: 20 }} */}
-        {/*   animate={{ opacity: 1, y: 0 }} */}
-        {/*   transition={{ delay: 0.4 }} */}
-        {/* > */}
-        {/* </motion.div> */}
-
-
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card>
             <CardContent className="p-6">
-              <h3 className="font-bold text-text-primary mb-4">الإنجازات</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {userProgress.badges.map((badge) => {
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-text-primary">الإنجازات</h3>
+                <Link href="/progress" className="text-sm text-primary hover:underline flex items-center gap-1">
+                  تطويري
+                  <ChevronLeft className="w-4 h-4" />
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {(stats?.badges ?? []).map((badge) => {
                   const IconComponent = iconMap[badge.icon] || Trophy;
                   return (
                     <div
                       key={badge.id}
-                      className={`p-4 rounded-xl text-center ${
-                        badge.earned
-                          ? 'bg-muted'
-                          : 'bg-muted/50'
+                      className={`p-4 rounded-xl text-center transition-all ${
+                        badge.earned ? 'bg-muted' : 'bg-muted/50 opacity-60'
                       }`}
                     >
                       <div className={`w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-2 ${
@@ -419,15 +414,59 @@ export default function Dashboard() {
                         <IconComponent className="w-6 h-6" />
                       </div>
                       <p className="font-medium text-sm text-text-primary">{badge.name}</p>
+                      <p className="text-xs text-text-secondary mt-1">
+                        {badge.earned ? (badge.earnedDate ? badge.earnedDate : 'تم الحصول عليها') : 'غير محققة'}
+                      </p>
                     </div>
                   );
                 })}
+                {(stats?.badges?.length ?? 0) === 0 && (
+                  <p className="text-text-secondary col-span-full text-center py-6">
+                    أكمل أول درس لتبدأ في جمع الإنجازات
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="font-bold text-text-primary mb-4">آخر النشاطات</h3>
+              {(stats?.recentActivity?.length ?? 0) === 0 && (
+                <p className="text-text-secondary text-center py-6">
+                  لا يوجد نشاط بعد — ابدأ رحلتك التعليمية الآن
+                </p>
+              )}
+              <div className="space-y-3">
+                {(stats?.recentActivity ?? []).map((activity) => (
+                  <div key={activity.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                      activity.type === 'lesson'
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-secondary/10 text-secondary'
+                    }`}>
+                      {activity.type === 'lesson' ? (
+                        <BookOpen className="w-5 h-5" />
+                      ) : (
+                        <ListChecks className="w-5 h-5" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm text-text-primary truncate">{activity.title}</p>
+                      <p className="text-xs text-text-secondary">
+                        {activity.type === 'lesson' ? 'درس' : 'اختبار'}
+                        {activity.score !== undefined ? ` • ${activity.score}%` : ''}
+                      </p>
+                    </div>
+                    <span className="text-xs text-text-secondary flex-shrink-0">
+                      {new Date(activity.date).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' })}
+                    </span>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>
         </div>
-
-
 
         <TooltipProvider>
           <Tooltip>
@@ -437,7 +476,6 @@ export default function Dashboard() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => {
-                  // Replace with your phone number when ready
                   const phoneNumber = '01022916304';
                   window.open(`https://wa.me/${phoneNumber}?text=مرحباً،سؤال عن الإحصاء`, '_blank');
                 }}
