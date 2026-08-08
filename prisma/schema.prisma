@@ -77,6 +77,7 @@ model Topic {
   lessons     Lesson[]
   pdfs        Pdf[]
   quizzes     Quiz[]
+  questions   Question[]
 }
 
 model Lesson {
@@ -92,11 +93,12 @@ model Lesson {
   files       Json?
   grade       String?
   order       Int      @default(0)
-  topicId     String
-  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  progress     UserLessonProgress[]
+  topicId   String
+  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  progress   UserLessonProgress[]
+  questions  Question[]
 }
 
 model Payment {
@@ -165,8 +167,14 @@ model Question {
   correctAnswer String
   difficulty    String   @default("medium") // easy | medium | hard
   explanation   String?
-  quizId        String
-  quiz          Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  points        Int      @default(1)
+  tags          String[] @default([])
+  topicId       String?
+  topic         Topic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  lessonId      String?
+  lesson        Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  quizId        String?
+  quiz          Quiz?    @relation(fields: [quizId], references: [id], onDelete: Cascade)
   order         Int      @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

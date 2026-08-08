@@ -140,6 +140,34 @@ export const adminPdfSchema = z.object({
   topicId: z.string().min(1).optional().nullable(),
 });
 
+export const questionBankSchema = z.object({
+  question: z.string().trim().min(1).max(500),
+  type: z.enum(['multiple-choice', 'true-false']).default('multiple-choice'),
+  options: z.array(z.string().trim()).min(2).max(10),
+  correctAnswer: z.string().trim().min(1),
+  explanation: z.string().max(2000).optional().nullable(),
+  difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
+  points: z.number().int().min(1).max(100).default(1),
+  tags: z.array(z.string().trim().min(1).max(30)).max(10).default([]),
+  topicId: z.string().min(1).optional().nullable(),
+  lessonId: z.string().min(1).optional().nullable(),
+});
+
+export const generateQuizSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  description: z.string().max(1000).optional().nullable(),
+  accessType: accessTypeSchema,
+  grade: z.string().trim().max(60).optional().nullable(),
+  topicId: z.string().min(1),
+  timeLimit: z.number().int().min(0).nullable().optional(),
+  passingScore: z.number().int().min(0).max(100).optional(),
+  distribution: z.object({
+    easy: z.number().int().min(0).max(200).default(0),
+    medium: z.number().int().min(0).max(200).default(0),
+    hard: z.number().int().min(0).max(200).default(0),
+  }),
+});
+
 export const adminAdviceSchema = z.object({
   title: z.string().trim().min(1).max(200),
   content: z.string().trim().min(1).max(10000),

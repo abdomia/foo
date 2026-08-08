@@ -11,10 +11,13 @@ export async function GET() {
   try {
     const accessLevel = await getEffectiveAccessLevel(user);
 
+    const gradeFilter = user.grade ? { OR: [{ grade: user.grade }, { grade: null }] } : {};
+
     const [topics, lessonProgress, quizProgress] = await Promise.all([
       prisma.topic.findMany({
+        where: gradeFilter,
         include: {
-          lessons: { orderBy: { order: 'asc' } },
+          lessons: { where: gradeFilter, orderBy: { order: 'asc' } },
           quizzes: { orderBy: { createdAt: 'asc' } },
         },
         orderBy: { order: 'asc' },

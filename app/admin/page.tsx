@@ -9,6 +9,8 @@ import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import { QuizFormModal, EditQuizModal } from '@/components/admin/QuizModals';
 import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
+import QuestionBankSection from '@/components/admin/QuestionBankSection';
+import GenerateQuizModal from '@/components/admin/GenerateQuizModal';
 import { CLASS_OPTIONS, getClassByKey } from '@/lib/classes';
 import {
   Video,
@@ -30,6 +32,8 @@ import {
   Download,
   Lightbulb,
   GripVertical,
+  Database,
+  Sparkles,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -85,7 +89,7 @@ export default function AdminPage() {
   const [showCodeForm, setShowCodeForm] = useState(false);
   const [codeForm, setCodeForm] = useState({ plan: 'monthly', durationDays: '30' });
   const [users, setUsers] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<'content' | 'users' | 'pdfs' | 'quizzes' | 'advice' | 'settings'>('content');
+  const [activeTab, setActiveTab] = useState<'content' | 'users' | 'pdfs' | 'quizzes' | 'questionBank' | 'advice' | 'settings'>('content');
   const [classFilter, setClassFilter] = useState<string>('');
 
   const [topicForm, setTopicForm] = useState({
@@ -123,6 +127,7 @@ export default function AdminPage() {
   const [quizzes, setQuizzes] = useState<any[]>([]);
   const [showQuizForm, setShowQuizForm] = useState(false);
   const [editingQuiz, setEditingQuiz] = useState<any>(null);
+  const [showGenerateQuiz, setShowGenerateQuiz] = useState(false);
 
   const [advice, setAdvice] = useState<any[]>([]);
   const [showAdviceForm, setShowAdviceForm] = useState(false);
@@ -765,6 +770,7 @@ const handleUpdatePdf = async () => {
               {activeTab === 'content' && 'إدارة المحتوى التعليمي'}
               {activeTab === 'users' && 'إدارة المستخدمين'}
               {activeTab === 'pdfs' && 'إدارة ملفات PDF'}
+              {activeTab === 'questionBank' && 'بنك الأسئلة'}
             </p>
           </div>
           <Button onClick={() => router.push('/dashboard')} variant="outline" className="gap-2">
@@ -833,6 +839,17 @@ const handleUpdatePdf = async () => {
           >
             <ClipboardList className="w-4 h-4" />
             الاختبارات
+          </button>
+          <button
+            onClick={() => setActiveTab('questionBank')}
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+              activeTab === 'questionBank'
+                ? 'bg-primary text-white'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            بنك الأسئلة
           </button>
           <button
             onClick={() => { setActiveTab('advice'); fetchAdvice(); }}
@@ -1304,6 +1321,10 @@ const handleUpdatePdf = async () => {
           </Card>
         )}
 
+        {activeTab === 'questionBank' && (
+          <QuestionBankSection topics={topics} classFilter={classFilter} />
+        )}
+
         {activeTab === 'quizzes' && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
@@ -1311,10 +1332,16 @@ const handleUpdatePdf = async () => {
                 <ClipboardList className="w-5 h-5" />
                 الاختبارات
               </CardTitle>
-              <Button onClick={() => setShowQuizForm(true)} size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                إضافة اختبار
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={() => setShowGenerateQuiz(true)} variant="outline" size="sm" className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  توليد تلقائي
+                </Button>
+                <Button onClick={() => setShowQuizForm(true)} size="sm" className="gap-2">
+                  <Plus className="w-4 h-4" />
+                  إضافة اختبار
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {filteredQuizzes.length === 0 ? (
@@ -2085,6 +2112,13 @@ const handleUpdatePdf = async () => {
         editingQuiz={editingQuiz}
         setEditingQuiz={setEditingQuiz}
         onSave={handleUpdateQuiz}
+      />
+
+      <GenerateQuizModal
+        show={showGenerateQuiz}
+        setShow={setShowGenerateQuiz}
+        topics={topics}
+        onGenerated={() => { fetchQuizzes(); }}
       />
 
       {showAdviceForm && (
