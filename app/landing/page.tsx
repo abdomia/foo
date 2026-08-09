@@ -14,13 +14,15 @@ import {
   Video, Target, Award, Users, Clock, CheckCircle2,
   Sparkles, ArrowLeft, Play, Crown, TrendingUp, BarChart3,
   BrainCircuit, GraduationCap, HeartHandshake, Zap, Shield,
-  Globe, LogIn, UserPlus, Menu, X, Sun, Moon, BookOpen
+  Globe, LogIn, UserPlus, Menu, X, Sun, Moon, BookOpen,
+  ChevronDown, Phone, Mail, MessageCircle, FileText, ClipboardList,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
-import { CLASSES, getClassByKey } from '@/lib/classes';
+import { CLASSES, getClassByKey, type ClassKey } from '@/lib/classes';
 import { ChatBot } from '@/components/chatbot/ChatBot';
 import { useTheme } from '@/components/ThemeProvider';
+import { cn } from '@/lib/utils';
 import platformHero from '@/public/platform-hero.png';
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -57,7 +59,7 @@ const features = [
 const whyJoin = [
   {
     icon: BrainCircuit,
-    title: 'تعلم بطريقة الحديثة',
+    title: 'تعلم بطريقة حديثة',
     description: 'نستخدم أحدث أساليب التعليم الرقمي لجعل التعلم ممتعاً وفعالاً',
   },
   {
@@ -108,6 +110,55 @@ const testimonials = [
   },
 ];
 
+const faqs = [
+  {
+    q: 'ما هي منصة الرائد؟',
+    a: 'منصة تعليمية مصرية متخصصة في تعليم مادتي الرياضيات والإحصاء لطلاب الثانوية العامة والصف الثالث الإعدادي، نقدم فيديوهات تعليمية عالية الجودة مع تمارين تطبيقية واختبارات شهرية ومتابعة مستمرة.',
+  },
+  {
+    q: 'كيف أبدأ الاشتراك؟',
+    a: 'أنشئ حساباً مجانياً أولاً، ثم اختر صفك الدراسي والخطة المناسبة لك، وادفع عبر فودافون كاش أو فعّل اشتراكك بكود تفعيل، وسيتم فتح المحتوى فور تأكيد الدفع.',
+  },
+  {
+    q: 'ما طرق الدفع المتاحة؟',
+    a: 'يمكنك الدفع بسهولة عبر فودافون كاش أو تفعيل اشتراكك بكود تفعيل، مع إرسال إثبات الدفع عبر واتساب لتأكيد الاشتراك وتفعيله.',
+  },
+  {
+    q: 'هل يمكن استخدام المنصة على جميع الأجهزة؟',
+    a: 'نعم، المنصة تعمل بسلاسة على الموبايل والتابلت والكمبيوتر، وتُحفظ آخر مشاهدة تلقائياً لتكمل دروسك من أي جهاز وفي أي وقت.',
+  },
+  {
+    q: 'كيف أتابع تقدمي في المادة؟',
+    a: 'توفر المنصة تقريراً مفصلاً يوضح نسبة إكمال كل درس، ودرجاتك في الاختبارات، وعدد أيام التعلم المتتالية، ومستواك العام في كل وحدة.',
+  },
+  {
+    q: 'ماذا يحدث عند انتهاء الاشتراك؟',
+    a: 'سيتم إيقاف الوصول إلى المحتوى المخصص للمشتركين حتى تجدد اشتراكك، مع بقاء شهاداتك ونتائجك وأجهزتك المسجلة محفوظة في حسابك.',
+  },
+];
+
+const pricingFeatures = [
+  'جميع الفيديوهات التعليمية',
+  'دروس جديدة كل أسبوع',
+  'تمارين تطبيقية غير محدودة',
+  'اختبارات شهرية',
+  'شهادات إتمام',
+  'دعم مباشر',
+];
+
+const teacherHighlights = [
+  'أسلوب مبسط وواضح يناسب جميع مستويات الطلاب',
+  'شرح تفصيلي لجميع أفكار المنهج مع التطبيق على أسئلة الامتحانات',
+  'متابعة دورية ورد على جميع استفسارات الطلاب',
+  'خبرة واسعة في تدريس الثانوية العامة والنظام الجديد',
+];
+
+const teacherStats = [
+  { number: '15+', label: 'سنة خبرة' },
+  { number: '5000+', label: 'طالب سابق' },
+  { number: '95%', label: 'نسبة نجاح' },
+];
+
 const classIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   third_preparatory: GraduationCap,
   first_secondary: BookOpen,
@@ -153,6 +204,9 @@ export default function LandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [landingVideoId, setLandingVideoId] = useState('k3sRZvSlBNE');
+  const [teacherName, setTeacherName] = useState('');
+  const [pricingClass, setPricingClass] = useState<ClassKey>('third_secondary_math');
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const heroRef = useRef<HTMLDivElement>(null);
   const heroImgRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
@@ -172,10 +226,15 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetch('/api/admin/settings').then(r => r.json()).then(data => {
-      if (data.success && data.data?.landingVideoUrl) {
-        const url = data.data.landingVideoUrl;
-        const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
-        setLandingVideoId(match ? match[1] : url);
+      if (data.success && data.data) {
+        if (data.data.landingVideoUrl) {
+          const url = data.data.landingVideoUrl;
+          const match = url.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+          setLandingVideoId(match ? match[1] : url);
+        }
+        if (data.data.teacherName) {
+          setTeacherName(data.data.teacherName);
+        }
       }
     }).catch(() => {});
   }, []);
@@ -216,6 +275,8 @@ export default function LandingPage() {
     setCurrentTestimonial((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   }, []);
 
+  const activePlans = getClassByKey(pricingClass)?.plans || [];
+
   return (
     <div className="min-h-screen bg-canvas overflow-x-hidden">
       <nav ref={navRef} className="nav-bar fixed top-0 left-0 right-0 z-50">
@@ -233,10 +294,11 @@ export default function LandingPage() {
                 <span className="font-bold text-lg text-text-primary hidden sm:block">منصة الرائد</span>
               </div>
 
-              <div className="hidden md:flex items-center gap-6">
-                <Link href="#who-we-are" className="text-text-secondary hover:text-text-primary transition-colors text-sm">من نحن</Link>
-                <Link href="#features" className="text-text-secondary hover:text-text-primary transition-colors text-sm">مميزاتنا</Link>
-                <Link href="#why-join" className="text-text-secondary hover:text-text-primary transition-colors text-sm">لماذا نحن</Link>
+              <div className="hidden lg:flex items-center gap-6">
+                <Link href="#courses" className="text-text-secondary hover:text-text-primary transition-colors text-sm">الدورات</Link>
+                <Link href="#why-alraed" className="text-text-secondary hover:text-text-primary transition-colors text-sm">لماذا الرائد؟</Link>
+                <Link href="#features" className="text-text-secondary hover:text-text-primary transition-colors text-sm">المميزات</Link>
+                <Link href="#pricing" className="text-text-secondary hover:text-text-primary transition-colors text-sm">الأسعار</Link>
                 <Link href="#testimonials" className="text-text-secondary hover:text-text-primary transition-colors text-sm">آراء الطلاب</Link>
               </div>
 
@@ -264,7 +326,7 @@ export default function LandingPage() {
                   variant="outline"
                   size="icon"
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden border-border text-text-secondary"
+                  className="lg:hidden border-border text-text-secondary"
                 >
                   {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                 </Button>
@@ -274,12 +336,15 @@ export default function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden glass border-b border-border">
+          <div className="lg:hidden glass border-b border-border max-h-[calc(100vh-4rem)] overflow-y-auto">
             <div className="px-4 py-3 space-y-2">
-              <Link href="#who-we-are" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">من نحن</Link>
-              <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">مميزاتنا</Link>
-              <Link href="#why-join" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">لماذا نحن</Link>
+              <Link href="#courses" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">الدورات</Link>
+              <Link href="#why-alraed" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">لماذا الرائد؟</Link>
+              <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">المميزات</Link>
+              <Link href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">الأسعار</Link>
               <Link href="#testimonials" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">آراء الطلاب</Link>
+              <Link href="#faq" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">الأسئلة الشائعة</Link>
+              <Link href="#teacher" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2 text-text-secondary hover:text-text-primary rounded-lg text-sm">مدرسك</Link>
               <div className="flex items-center justify-between pt-2 border-t border-border">
                 <button
                   onClick={() => { handleToggle(); setMobileMenuOpen(false); }}
@@ -308,6 +373,7 @@ export default function LandingPage() {
         )}
       </nav>
 
+      {/* Hero Section */}
       <section
         ref={heroRef}
         className="relative min-h-screen flex items-center pt-20 pb-8 overflow-hidden"
@@ -376,6 +442,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Stats */}
       <section className="py-12 sm:py-16 relative">
         <div className="container mx-auto px-4 max-w-5xl">
           <StaggerGrid>
@@ -394,6 +461,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Intro Video */}
       <section className="py-16 sm:py-24 lg:py-28 bg-muted-dark/50 relative">
         <div className="container mx-auto px-4 max-w-6xl">
           <SectionReveal>
@@ -440,15 +508,90 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="classes" className="py-16 sm:py-24 lg:py-28 relative">
+      {/* Why AlRaed? */}
+      <section id="why-alraed" className="py-16 sm:py-24 lg:py-28 relative">
         <div className="container mx-auto px-4 max-w-6xl">
           <SectionReveal>
             <div className="text-center mb-12 sm:mb-16">
               <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
-                الصفوف الدراسية
+                لماذا الرائد؟
               </Badge>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
-                اختر <span className="text-primary">صفك الدراسي</span>
+                لماذا يختار الطلاب <span className="text-primary">منصة الرائد</span>؟
+              </h2>
+              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
+                نقدم لك تجربة تعليمية فريدة مصممة خصيصاً لضمان نجاحك
+              </p>
+            </div>
+          </SectionReveal>
+
+          <StaggerGrid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              {whyJoin.map((item, index) => (
+                <Card key={index} className="bg-surface-card border-border card-hover">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-11 h-11 bg-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <item.icon className="w-5 h-5 text-accent" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-text-primary mb-1">{item.title}</h3>
+                        <p className="text-sm text-text-muted">{item.description}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-16 sm:py-24 lg:py-28 bg-muted-dark/50 relative">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <SectionReveal>
+            <div className="text-center mb-12 sm:mb-16">
+              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
+                ماذا نقدم
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
+                محتوى تعليمي <span className="text-primary">شامل</span>
+              </h2>
+              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
+                نوفر لك كل ما تحتاجه للنجاح في الرياضيات والإحصاء من فيديوهات ودروس تطبيقية واختبارات
+              </p>
+            </div>
+          </SectionReveal>
+
+          <StaggerGrid>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+              {features.map((feature, index) => (
+                <Card key={index} className="bg-surface-card border-border card-hover">
+                  <CardContent className="p-6 text-center">
+                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <feature.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-base font-bold text-text-primary mb-2">{feature.title}</h3>
+                    <p className="text-sm text-text-muted">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* Courses */}
+      <section id="courses" className="py-16 sm:py-24 lg:py-28 relative">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <SectionReveal>
+            <div className="text-center mb-12 sm:mb-16">
+              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
+                الدورات التعليمية
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
+                اختر <span className="text-primary">دورتك</span> المناسبة
               </h2>
               <p className="text-base sm:text-lg text-text-secondary max-w-2xl mx-auto">
                 خطط وأسعار مصممة خصيصاً لكل صف دراسي - اختر صفك وابدأ رحلتك التعليمية
@@ -483,6 +626,91 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing */}
+      <section id="pricing" className="py-16 sm:py-24 lg:py-28 bg-muted-dark/50 relative">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <SectionReveal>
+            <div className="text-center mb-12 sm:mb-16">
+              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
+                الأسعار
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
+                خطط <span className="text-primary">مرنة</span> تناسبك
+              </h2>
+              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
+                اختر صفك الدراسي لعرض الخطط والأسعار المناسبة لك
+              </p>
+            </div>
+          </SectionReveal>
+
+          <div className="flex flex-wrap gap-2 justify-center mb-10">
+            {CLASSES.map((c) => (
+              <button
+                key={c.key}
+                onClick={() => setPricingClass(c.key)}
+                className={cn(
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap',
+                  pricingClass === c.key
+                    ? 'bg-primary text-white shadow-md'
+                    : 'bg-surface-card border border-border text-text-secondary hover:text-text-primary hover:border-primary/40'
+                )}
+              >
+                {c.short}
+              </button>
+            ))}
+          </div>
+
+          <StaggerGrid>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              {activePlans.map((plan) => {
+                const featured = plan.id === 'yearly';
+                return (
+                  <Card
+                    key={plan.id}
+                    className={cn(
+                      'relative bg-surface-card border-border card-hover',
+                      featured && 'ring-2 ring-primary'
+                    )}
+                  >
+                    {featured && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                        <Badge variant="default" className="whitespace-nowrap">الأفضل قيمة</Badge>
+                      </div>
+                    )}
+                    <CardContent className="p-6 text-center">
+                      <h3 className="font-bold text-text-primary text-lg mb-1">{plan.name}</h3>
+                      <p className="text-sm text-text-muted mb-5">{plan.period}</p>
+                      <div className="flex items-baseline justify-center gap-1 mb-6">
+                        <span className="text-4xl font-bold text-text-primary">{plan.price}</span>
+                        <span className="text-text-muted">جنيه</span>
+                      </div>
+                      <ul className="space-y-3 text-right mb-6">
+                        {pricingFeatures.map((f) => (
+                          <li key={f} className="flex items-center gap-2 text-sm text-text-secondary">
+                            <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
+                            {f}
+                          </li>
+                        ))}
+                      </ul>
+                      <Link href={`/subscribe?class=${pricingClass}`} className="block">
+                        <Button
+                          variant={featured ? 'default' : 'outline'}
+                          className={cn('w-full gap-2', !featured && 'border-primary/40 text-primary hover:bg-primary/10')}
+                        >
+                          <Crown className="w-4 h-4" />
+                          اشترك الآن
+                        </Button>
+                      </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </StaggerGrid>
+        </div>
+      </section>
+
+      {/* Who We Are */}
       <section id="who-we-are" className="py-16 sm:py-24 lg:py-28 relative">
         <div className="container mx-auto px-4 max-w-6xl">
           <SectionReveal>
@@ -575,78 +803,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="py-16 sm:py-24 lg:py-28 bg-muted-dark/50 relative">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <SectionReveal>
-            <div className="text-center mb-12 sm:mb-16">
-              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
-                ماذا نقدم
-              </Badge>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
-                محتوى تعليمي <span className="text-primary">شامل</span>
-              </h2>
-              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
-                نوفر لك كل ما تحتاجه للنجاح في الرياضيات والإحصاء من فيديوهات ودروس تطبيقية واختبارات
-              </p>
-            </div>
-          </SectionReveal>
-
-          <StaggerGrid>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {features.map((feature, index) => (
-                <Card key={index} className="bg-surface-card border-border card-hover">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/10 flex items-center justify-center">
-                      <feature.icon className="w-6 h-6 text-primary" />
-                    </div>
-                    <h3 className="text-base font-bold text-text-primary mb-2">{feature.title}</h3>
-                    <p className="text-sm text-text-muted">{feature.description}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </StaggerGrid>
-        </div>
-      </section>
-
-      <section id="why-join" className="py-16 sm:py-24 lg:py-28 relative">
-        <div className="container mx-auto px-4 max-w-6xl">
-          <SectionReveal>
-            <div className="text-center mb-12 sm:mb-16">
-              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
-                لماذا تنضم إلينا
-              </Badge>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
-                6 أسباب للاختيار <span className="text-primary">الرائد</span>
-              </h2>
-              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
-                نقدم لك تجربة تعليمية فريدة مصممة خصيصاً لضمان نجاحك
-              </p>
-            </div>
-          </SectionReveal>
-
-          <StaggerGrid>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {whyJoin.map((item, index) => (
-                <Card key={index} className="bg-surface-card border-border card-hover">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="w-11 h-11 bg-accent/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <item.icon className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-text-primary mb-1">{item.title}</h3>
-                        <p className="text-sm text-text-muted">{item.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </StaggerGrid>
-        </div>
-      </section>
-
+      {/* Testimonials */}
       <section id="testimonials" className="py-16 sm:py-24 lg:py-28 bg-muted-dark/50 relative">
         <div className="container mx-auto px-4 max-w-4xl">
           <SectionReveal>
@@ -709,6 +866,139 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* FAQ */}
+      <section id="faq" className="py-16 sm:py-24 lg:py-28 relative">
+        <div className="container mx-auto px-4 max-w-3xl">
+          <SectionReveal>
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
+                الأسئلة الشائعة
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
+                لديك <span className="text-primary">سؤال؟</span> لدينا الجواب
+              </h2>
+              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
+                جمعنا لك إجابات أكثر الأسئلة شيوعاً عن المنصة والاشتراك
+              </p>
+            </div>
+          </SectionReveal>
+
+          <div className="space-y-3">
+            {faqs.map((faq, index) => {
+              const open = openFaq === index;
+              return (
+                <Card
+                  key={index}
+                  className={cn(
+                    'bg-surface-card border-border transition-colors',
+                    open && 'border-primary/40'
+                  )}
+                >
+                  <button
+                    onClick={() => setOpenFaq(open ? null : index)}
+                    className="w-full flex items-center justify-between gap-4 p-5 text-right"
+                  >
+                    <span className="font-medium text-text-primary">{faq.q}</span>
+                    <ChevronDown
+                      className={cn(
+                        'w-5 h-5 text-text-muted flex-shrink-0 transition-transform',
+                        open && 'rotate-180 text-primary'
+                      )}
+                    />
+                  </button>
+                  {open && (
+                    <div className="px-5 pb-5">
+                      <p className="text-sm text-text-secondary leading-relaxed">{faq.a}</p>
+                    </div>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* About Teacher */}
+      <section id="teacher" className="py-16 sm:py-24 lg:py-28 bg-muted-dark/50 relative">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <SectionReveal>
+            <div className="text-center mb-12 sm:mb-16">
+              <Badge variant="outline" className="mb-4 border-primary/30 text-primary bg-primary/5">
+                تعرف على مدرسك
+              </Badge>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-text-primary mb-4">
+                مدرسك <span className="text-primary">معك خطوة بخطوة</span>
+              </h2>
+              <p className="text-sm sm:text-base text-text-muted max-w-2xl mx-auto">
+                خبرة طويلة في تدريس الرياضيات والإحصاء للثانوية العامة بأسلوب مبسط يحبه الطلاب
+              </p>
+            </div>
+          </SectionReveal>
+
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <SectionReveal>
+              <div className="relative max-w-md mx-auto">
+                <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-primary/20 to-accent/20 border border-border" />
+                <div className="relative h-full flex flex-col items-center justify-center p-10 text-center">
+                  <div className="w-28 h-28 rounded-full bg-surface-card border border-primary/30 flex items-center justify-center mb-6 shadow-xl">
+                    <GraduationCap className="w-14 h-14 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-text-primary mb-1">
+                    {teacherName || 'معلم الرياضيات والإحصاء'}
+                  </h3>
+                  <p className="text-text-muted text-sm mb-4">خبير تدريس مادتي الرياضيات والإحصاء</p>
+                  <Badge variant="outline" className="border-primary/30 text-primary bg-primary/5">
+                    منصة الرائد
+                  </Badge>
+                </div>
+                <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-primary/10 rounded-full blur-xl" />
+                <div className="absolute -top-4 -right-4 w-32 h-32 bg-accent/10 rounded-full blur-xl" />
+              </div>
+            </SectionReveal>
+
+            <SectionReveal>
+              <div>
+                <h3 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">
+                  {teacherName || 'مدرس الرياضيات والإحصاء'}
+                </h3>
+                <p className="text-primary font-medium mb-4">خبير تدريس مادتي الرياضيات والإحصاء</p>
+                <p className="text-text-secondary leading-relaxed mb-6">
+                  مدرس متخصص في مادتي الرياضيات والإحصاء للثانوية العامة، يقدم المنهج بأسلوب مبسط وسلس
+                  يعتمد على الفهم قبل الحفظ، مع تدريب الطلاب على جميع أفكار الأسئلة الواردة في الامتحانات
+                  وضمان تثبيت المعلومات من خلال تمارين واختبارات مستمرة.
+                </p>
+
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {teacherStats.map((s) => (
+                    <div key={s.label} className="bg-surface-card border border-border rounded-2xl p-4 text-center">
+                      <p className="text-2xl sm:text-3xl font-bold text-text-primary">{s.number}</p>
+                      <p className="text-xs text-text-muted mt-1">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {teacherHighlights.map((h) => (
+                    <li key={h} className="flex items-start gap-3 text-sm text-text-secondary">
+                      <CheckCircle2 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                      {h}
+                    </li>
+                  ))}
+                </ul>
+
+                <Link href="/subscribe" className="inline-block">
+                  <Button className="gap-2">
+                    <Crown className="w-4 h-4" />
+                    احجز مقعدك الآن
+                  </Button>
+                </Link>
+              </div>
+            </SectionReveal>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
       <section className="py-16 sm:py-24 lg:py-28 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
@@ -745,31 +1035,96 @@ export default function LandingPage() {
 
       <ChatBot />
 
-      <footer className="py-10 border-t border-border bg-surface-card">
+      {/* Footer */}
+      <footer className="py-12 border-t border-border bg-surface-card">
         <div className="container mx-auto px-4 max-w-6xl">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/bar.png"
-                alt="منصة الرائد"
-                width={36}
-                height={36}
-                className="w-8 h-8 sm:w-10 sm:h-10"
-              />
-              <span className="font-bold text-lg text-text-primary">منصة الرائد</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <Image
+                  src="/bar.png"
+                  alt="منصة الرائد"
+                  width={40}
+                  height={40}
+                  className="w-9 h-9 sm:w-10 sm:h-10"
+                />
+                <span className="font-bold text-lg text-text-primary">منصة الرائد</span>
+              </div>
+              <p className="text-sm text-text-muted leading-relaxed mb-4">
+                منصة تعليمية مصرية متخصصة في تعليم مادتي الرياضيات والإحصاء، نساعد طلاب الثانوية العامة
+                على تحقيق أعلى الدرجات.
+              </p>
+              <div className="flex items-center gap-3">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors text-text-muted hover:text-primary">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                  </svg>
+                </a>
+                <a href="https://wa.me/01022916304" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors text-text-muted hover:text-primary">
+                  <MessageCircle className="w-5 h-5" />
+                </a>
+                <a href="mailto:contact@alraed.com" className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors text-text-muted hover:text-primary">
+                  <Mail className="w-5 h-5" />
+                </a>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors text-text-muted hover:text-primary">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-              <a href="mailto:contact@alraed.com" className="w-10 h-10 bg-muted rounded-full flex items-center justify-center hover:bg-primary/20 transition-colors text-text-muted hover:text-primary">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                </svg>
-              </a>
+
+            <div>
+              <h3 className="font-bold text-text-primary mb-4">روابط سريعة</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link href="/lessons" className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    الدروس التعليمية
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/quizzes" className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4" />
+                    الاختبارات
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/pdfs" className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-2">
+                    <FileText className="w-4 h-4" />
+                    ملفات PDF
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/subscribe" className="text-text-muted hover:text-text-primary transition-colors flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    الاشتراك والأسعار
+                  </Link>
+                </li>
+              </ul>
             </div>
+
+            <div>
+              <h3 className="font-bold text-text-primary mb-4">تواصل معنا</h3>
+              <ul className="space-y-3 text-sm">
+                <li className="flex items-center gap-3 text-text-muted">
+                  <span className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-text-secondary">
+                    <Phone className="w-4 h-4" />
+                  </span>
+                  <span dir="ltr">01022916304</span>
+                </li>
+                <li className="flex items-center gap-3 text-text-muted">
+                  <span className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-text-secondary">
+                    <Mail className="w-4 h-4" />
+                  </span>
+                  <span dir="ltr">contact@alraed.com</span>
+                </li>
+                <li className="flex items-center gap-3 text-text-muted">
+                  <span className="w-9 h-9 bg-muted rounded-full flex items-center justify-center text-text-secondary">
+                    <MessageCircle className="w-4 h-4" />
+                  </span>
+                  دعم فني عبر واتساب
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 pt-6 border-t border-border text-center">
             <p className="text-sm text-text-muted">
               © 2026 منصة الرائد. جميع الحقوق محفوظة.
             </p>
