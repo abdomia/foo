@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { QuizFormModal, EditQuizModal } from '@/components/admin/QuizModals';
 import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
 import QuestionBankSection from '@/components/admin/QuestionBankSection';
@@ -38,6 +39,7 @@ import {
   Bell,
   Send,
   LayoutDashboard,
+  BarChart3,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -660,7 +662,7 @@ const handleUpdatePdf = async () => {
   };
 
   function SettingsTab() {
-    const [settings, setSettings] = useState({ landingVideoUrl: 'k3sRZvSlBNE', teacherName: '' });
+    const [settings, setSettings] = useState({ landingVideoUrl: 'k3sRZvSlBNE', teacherName: '', maxDevices: 3 });
     const [saving, setSaving] = useState(false);
     const [settingsMessage, setSettingsMessage] = useState('');
     const [announcementTitle, setAnnouncementTitle] = useState('');
@@ -761,6 +763,17 @@ const handleUpdatePdf = async () => {
               onChange={(e) => setSettings({ ...settings, teacherName: e.target.value })}
               placeholder="مثال: أ. محمد أحمد"
             />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-2 block">الحد الأقصى لعدد الأجهزة لكل حساب</label>
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              value={settings.maxDevices}
+              onChange={(e) => setSettings({ ...settings, maxDevices: Number(e.target.value) })}
+            />
+            <p className="text-xs text-text-secondary mt-1">عند تجاوز هذا العدد يُطلب من الطالب تسجيل الخروج من جهاز أقدم.</p>
           </div>
           {settingsMessage && (
             <div className={`text-sm rounded-lg p-3 ${settingsMessage.includes('نجاح') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
@@ -979,10 +992,16 @@ const handleUpdatePdf = async () => {
               {activeTab === 'questionBank' && 'بنك الأسئلة'}
             </p>
           </div>
-          <Button onClick={() => router.push('/dashboard')} variant="outline" className="gap-2">
-            <ArrowRight className="w-4 h-4" />
-            العودة للوحة التحكم
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link href="/admin/reports" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 text-sm font-medium transition-colors">
+              <BarChart3 className="w-4 h-4" />
+              التقارير
+            </Link>
+            <Button onClick={() => router.push('/dashboard')} variant="outline" className="gap-2">
+              <ArrowRight className="w-4 h-4" />
+              العودة للوحة التحكم
+            </Button>
+          </div>
         </div>
 
         <div className="mb-4">

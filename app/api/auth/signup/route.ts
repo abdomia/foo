@@ -1,9 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createUser, getUserByEmail } from '@/lib/db';
-import { createSession, SESSION_COOKIE, SESSION_MAX_AGE } from '@/lib/auth';
+import {
+  createSession,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE,
+  parseUserAgent,
+  type SessionDevice,
+} from '@/lib/auth';
 import { signupSchema } from '@/lib/validation';
 import { rateLimit, tooManyRequests } from '@/lib/rate-limit';
+
+function deviceFromBody(body: unknown): SessionDevice {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const deviceId =
+    typeof b.deviceId === 'string' && b.deviceId ? (b.deviceId as string).slice(0, 200) : undefined;
+  const userAgent =
+    typeof b.userAgent === 'string' ? (b.userAgent as string).slice(0, 500) : undefined;
+  const parsed = userAgent ? parseUserAgent(userAgent) : undefined;
+  return {
+    deviceId,
+    userAgent,
+    browser: typeof b.browser === 'string' ? (b.browser as string).slice(0, 60) : parsed?.browser,
+    os: typeof b.os === 'string' ? (b.os as string).slice(0, 60) : parsed?.os,
+    deviceName:
+      typeof b.deviceName === 'string' ? (b.deviceName as string).slice(0, 120) : parsed?.deviceName,
+  };
+}
 
 export async function POST(request: NextRequest) {
   if (!rateLimit(request, 5, 60 * 1000)) {
@@ -30,6 +53,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = parsed.data;
+    const device = deviceFromBody(body);
 
     const existingUser = await getUserByEmail(data.email);
     if (existingUser) {
@@ -50,7 +74,7 @@ export async function POST(request: NextRequest) {
       isSubscribed: false,
     });
 
-    const token = await createSession(user.id);
+    const token = await createSession(user.id, device);
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE, token, {
       httpOnly: true,

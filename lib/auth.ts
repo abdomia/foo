@@ -49,11 +49,74 @@ export function generateSessionToken(): string {
   return randomBytes(32).toString('base64url');
 }
 
-export async function createSession(userId: string): Promise<string> {
+export interface SessionDevice {
+  deviceId?: string;
+  deviceName?: string;
+  browser?: string;
+  os?: string;
+  userAgent?: string;
+}
+
+export function parseUserAgent(ua: string): { browser: string; os: string; deviceName: string } {
+  const browserMap: [RegExp, string][] = [
+    [/Edg\//, 'Edge'],
+    [/OPR\//, 'Opera'],
+    [/Chrome\//, 'Chrome'],
+    [/Firefox\//, 'Firefox'],
+    [/Safari\//, 'Safari'],
+    [/MSIE|Trident/, 'Internet Explorer'],
+  ];
+  let browser = 'متصفح';
+  for (const [re, name] of browserMap) {
+    if (re.test(ua)) {
+      browser = name;
+      break;
+    }
+  }
+
+  const osMap: [RegExp, string][] = [
+    [/Windows/, 'Windows'],
+    [/Android/, 'Android'],
+    [/iPhone|iPad|iPod/, 'iOS'],
+    [/Mac OS X|Macintosh/, 'macOS'],
+    [/Linux/, 'Linux'],
+  ];
+  let os = 'جهاز';
+  for (const [re, name] of osMap) {
+    if (re.test(ua)) {
+      os = name;
+      break;
+    }
+  }
+
+  let deviceName = '';
+  if (/iPhone/.test(ua)) deviceName = 'iPhone';
+  else if (/iPad/.test(ua)) deviceName = 'iPad';
+  else if (/Android/.test(ua)) {
+    const m = ua.match(/Android [\d.]+; [^;)]+/);
+    if (m) deviceName = m[0].replace(/Android [\d.]+; /, '').trim();
+  } else if (/Windows/.test(ua)) deviceName = 'كمبيوتر';
+  else if (/Macintosh/.test(ua)) deviceName = 'Mac';
+  else if (/Linux/.test(ua)) deviceName = 'Linux';
+
+  return { browser, os, deviceName };
+}
+
+export async function createSession(userId: string, device?: SessionDevice): Promise<string> {
   const token = generateSessionToken();
   const expiresAt = new Date(Date.now() + SESSION_MAX_AGE * 1000);
   await prisma.session.create({
-    data: { tokenHash: hashToken(token), userId, expiresAt },
+    data: {
+      tokenHash: hashToken(token),
+      userId,
+      expiresAt,
+      deviceId: device?.deviceId || null,
+      deviceName: device?.deviceName || null,
+      browser: device?.browser || null,
+      os: device?.os || null,
+      userAgent: device?.userAgent || null,
+      lastActiveAt: new Date(),
+    },
   });
   return token;
 }
@@ -88,7 +151,58 @@ export async function getSessionUser(): Promise<SafeUser | null> {
     return null;
   }
 
+  // Throttled last-activity touch (max once per 5 minutes per session).
+  const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+  if (!session.lastActiveAt || session.lastActiveAt < fiveMinAgo) {
+    prisma.session
+      .update({ where: { id: session.id }, data: { lastActiveAt: new Date() } })
+      .catch(() => {});
+  }
+
   return sanitizeUser(session.user);
+}
+
+export async function getMaxDevices(): Promise<number> {
+  const setting = await prisma.siteSetting.findUnique({ where: { id: 'platform' } });
+  const value = setting?.maxDevices;
+  return typeof value === 'number' && value > 0 ? value : 3;
+}
+
+export async function countActiveDevices(userId: string): Promise<number> {
+  const sessions = await prisma.session.findMany({
+    where: { userId, expiresAt: { gt: new Date() } },
+    select: { deviceId: true },
+  });
+  const set = new Set<string | null>();
+  for (const s of sessions) set.add(s.deviceId ?? null);
+  return set.size;
+}
+
+export async function deviceHasActiveSession(userId: string, deviceId: string): Promise<boolean> {
+  const count = await prisma.session.count({
+    where: { userId, deviceId, expiresAt: { gt: new Date() } },
+  });
+  return count > 0;
+}
+
+// Revokes the least-recently-active device (excluding an optional deviceId).
+export async function revokeOldestDevice(userId: string, exceptDeviceId?: string) {
+  const sessions = await prisma.session.findMany({
+    where: { userId, expiresAt: { gt: new Date() } },
+    orderBy: { lastActiveAt: 'asc' },
+  });
+
+  const groups = new Map<string, typeof sessions>();
+  for (const s of sessions) {
+    const key = s.deviceId ?? '__unknown__';
+    if (exceptDeviceId && s.deviceId === exceptDeviceId) continue;
+    const arr = groups.get(key) ?? [];
+    arr.push(s);
+    groups.set(key, arr);
+  }
+  const firstGroup = groups.values().next().value as typeof sessions | undefined;
+  if (!firstGroup) return;
+  await prisma.session.deleteMany({ where: { id: { in: firstGroup.map((s) => s.id) } } });
 }
 
 export function unauthorized(message = 'غير مصرح'):

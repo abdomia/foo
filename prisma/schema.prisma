@@ -125,20 +125,28 @@ model Subscription {
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id           String    @id @default(cuid())
+  tokenHash    String    @unique
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt    DateTime
+  deviceId     String?
+  deviceName   String?
+  browser      String?
+  os           String?
+  userAgent    String?
+  lastActiveAt DateTime?
+  createdAt    DateTime  @default(now())
 
   @@index([userId])
+  @@index([userId, deviceId])
 }
 
 model SiteSetting {
-  id    String @id @default("platform")
+  id              String @id @default("platform")
   landingVideoUrl String @default("k3sRZvSlBNE")
-  teacherName String @default("منصة الرائد")
+  teacherName     String @default("منصة الرائد")
+  maxDevices      Int    @default(3)
 }
 
 model Topic {

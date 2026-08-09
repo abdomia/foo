@@ -36,26 +36,48 @@ export default function LoginPage() {
   const [error, setError] = useState(oauthErrorFromUrl);
   const [rememberMe, setRememberMe] = useState(false);
 
+  const routeAfterLogin = (loggedUser?: { isAdmin?: boolean; role?: string }) => {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+    if (loggedUser?.isAdmin) {
+      router.push('/admin');
+    } else if (loggedUser?.role === 'parent') {
+      router.push('/parent');
+    } else if (redirect) {
+      router.push(redirect);
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     const result = await login(email, password);
     if (result.success) {
-      const params = new URLSearchParams(window.location.search);
-      const redirect = params.get('redirect');
-      if (result.user?.isAdmin) {
-        router.push('/admin');
-      } else if (result.user?.role === 'parent') {
-        router.push('/parent');
-      } else if (redirect) {
-        router.push(redirect);
-      } else {
-        router.push('/dashboard');
-      }
-    } else {
-      setError(result.error || 'حدث خطأ أثناء تسجيل الدخول');
+      routeAfterLogin(result.user);
+      return;
     }
+
+    if (result.code === 'MAX_DEVICES') {
+      const ok = window.confirm(
+        `${result.error}\n\nهل تريد تسجيل الخروج من أقدم جهاز والمتابعة؟`
+      );
+      if (ok) {
+        const forced = await login(email, password, true);
+        if (forced.success) {
+          routeAfterLogin(forced.user);
+        } else {
+          setError(forced.error || 'حدث خطأ أثناء تسجيل الدخول');
+        }
+        return;
+      }
+      setError(result.error || 'حدث خطأ أثناء تسجيل الدخول');
+      return;
+    }
+
+    setError(result.error || 'حدث خطأ أثناء تسجيل الدخول');
   };
 
   return (

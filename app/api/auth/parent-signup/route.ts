@@ -2,9 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { hashPassword } from '@/lib/password';
-import { createSession, SESSION_COOKIE, SESSION_MAX_AGE, sanitizeUser } from '@/lib/auth';
+import {
+  createSession,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE,
+  sanitizeUser,
+  parseUserAgent,
+  type SessionDevice,
+} from '@/lib/auth';
 import { parentSignupSchema } from '@/lib/validation';
 import { rateLimit, tooManyRequests } from '@/lib/rate-limit';
+
+function deviceFromBody(body: unknown): SessionDevice {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const deviceId =
+    typeof b.deviceId === 'string' && b.deviceId ? (b.deviceId as string).slice(0, 200) : undefined;
+  const userAgent =
+    typeof b.userAgent === 'string' ? (b.userAgent as string).slice(0, 500) : undefined;
+  const parsed = userAgent ? parseUserAgent(userAgent) : undefined;
+  return {
+    deviceId,
+    userAgent,
+    browser: typeof b.browser === 'string' ? (b.browser as string).slice(0, 60) : parsed?.browser,
+    os: typeof b.os === 'string' ? (b.os as string).slice(0, 60) : parsed?.os,
+    deviceName:
+      typeof b.deviceName === 'string' ? (b.deviceName as string).slice(0, 120) : parsed?.deviceName,
+  };
+}
 
 function normalizePhone(p: string): string {
   return p.replace(/[^0-9]/g, '');
@@ -35,6 +59,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { name, email, password, phone } = parsed.data;
+    const device = deviceFromBody(body);
 
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
@@ -74,7 +99,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const token = await createSession(parent.id);
+    const token = await createSession(parent.id, device);
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE, token, {
       httpOnly: true,
