@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { quizId, score, passed, answers = [] } = parsed.data;
+    const { quizId, answers = [] } = parsed.data;
 
     const quiz = await prisma.quiz.findUnique({
       where: { id: quizId },
@@ -75,9 +75,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ignore answers for questions that do not belong to this quiz.
+    const validIds = new Set(quiz.questions.map((q) => q.id));
+    const answersMap = new Map<string, string | null>();
+    for (const a of answers) {
+      if (validIds.has(a.id) && !answersMap.has(a.id)) {
+        answersMap.set(a.id, a.selected ?? null);
+      }
+    }
+
+    // The score is always computed server-side from the DB questions.
+    let correctCount = 0;
     const analysis = quiz.questions.map((q) => {
-      const submitted = answers.find((a) => a.id === q.id);
-      const correct = String(q.correctAnswer) === (submitted?.selected ?? '');
+      const selected = answersMap.get(q.id) ?? null;
+      const correct = selected !== null && String(q.correctAnswer) === String(selected);
+      if (correct) correctCount++;
       return {
         questionId: q.id,
         question: q.question,
@@ -85,10 +97,14 @@ export async function POST(request: NextRequest) {
         difficulty: q.difficulty || 'medium',
         correctAnswer: q.correctAnswer,
         explanation: q.explanation ?? null,
-        selected: submitted?.selected ?? null,
+        selected,
         correct,
       };
     });
+
+    const total = quiz.questions.length;
+    const score = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+    const passed = score >= quiz.passingScore;
 
     const existing = await prisma.userQuizProgress.findUnique({
       where: { userId_quizId: { userId: user.id, quizId } },
@@ -120,11 +136,11 @@ export async function POST(request: NextRequest) {
         });
 
     // Gamification: streak + XP + counters + badges.
-    const correctCount = analysis.filter((a) => a.correct).length;
+    const correctCountVal = correctCount;
     await touchStreak(user.id);
     await awardXp(user.id, XP.QUIZ_ATTEMPT, 'quiz_attempt');
-    if (correctCount > 0) {
-      await awardXp(user.id, XP.CORRECT_ANSWER * correctCount, 'correct_answer');
+    if (correctCountVal > 0) {
+      await awardXp(user.id, XP.CORRECT_ANSWER * correctCountVal, 'correct_answer');
     }
     await prisma.user.update({
       where: { id: user.id },

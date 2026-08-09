@@ -342,7 +342,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
                   ) : (
                     <a
                       key={pdf.id}
-                      href={pdf.fileUrl || '#'}
+                      href={`/api/files/pdf/${pdf.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-4 rounded-xl border border-border hover:border-primary transition-colors group"

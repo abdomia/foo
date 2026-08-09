@@ -40,6 +40,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# private storage (PDFs served through authorized endpoints only)
+/private/uploads
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -200,22 +200,25 @@ export async function getSubscriptionCodeByCode(code: string): Promise<PrismaSub
 }
 
 export async function useSubscriptionCode(code: string, userId: string): Promise<PrismaSubscriptionCode | null> {
+  const now = new Date();
+
+  // Read the code purely for its metadata (plan). Consumption is atomic below.
   const subscriptionCode = await prisma.subscriptionCode.findUnique({
     where: { code },
   });
   if (!subscriptionCode) return null;
   if (subscriptionCode.isUsed) return null;
-  if (new Date() > subscriptionCode.expiresAt) return null;
+  if (now > subscriptionCode.expiresAt) return null;
 
-  const updatedCode = await prisma.subscriptionCode.update({
-    where: { code },
-    data: {
-      isUsed: true,
-      usedBy: userId,
-      usedAt: new Date(),
-    },
+  // Atomically claim the code. Only ONE request can match `isUsed: false`,
+  // so concurrent calls cannot double-consume it.
+  const claimed = await prisma.subscriptionCode.updateMany({
+    where: { code, isUsed: false, expiresAt: { gt: now } },
+    data: { isUsed: true, usedBy: userId, usedAt: now },
   });
-  return updatedCode;
+
+  if (claimed.count !== 1) return null;
+  return subscriptionCode;
 }
 
 export async function deleteSubscriptionCode(id: string): Promise<boolean> {

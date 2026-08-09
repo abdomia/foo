@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -14,13 +15,15 @@ async function createAdmin() {
     process.exit(1);
   }
 
+  const passwordHash = await bcrypt.hash(password, 10);
+
   // Check if user exists
   let user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
   
   if (user) {
     user = await prisma.user.update({
       where: { email: email.toLowerCase() },
-      data: { isAdmin: true },
+      data: { isAdmin: true, password: passwordHash },
     });
     console.log(`✅ Updated ${user.name} (${user.email}) as admin!`);
   } else {
@@ -28,7 +31,7 @@ async function createAdmin() {
       data: {
         name,
         email: email.toLowerCase(),
-        password,
+        password: passwordHash,
         phone,
         parentPhone: phone,
         isAdmin: true,

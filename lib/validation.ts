@@ -29,15 +29,13 @@ export const activateCodeSchema = z.object({
 export const lessonProgressSchema = z.object({
   lessonId: z.string().min(1),
   progress: z.number().int().min(0).max(100).optional(),
-  watchSeconds: z.number().int().min(0).optional(),
-  timeSpentSeconds: z.number().int().min(0).optional(),
+  watchSeconds: z.number().int().min(0).max(86400).optional(),
+  timeSpentSeconds: z.number().int().min(0).max(600).optional(),
   completed: z.boolean().optional(),
 });
 
 export const quizResultSchema = z.object({
   quizId: z.string().min(1),
-  score: z.number().int().min(0).max(100),
-  passed: z.boolean(),
   answers: z
     .array(
       z.object({

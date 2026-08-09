@@ -39,25 +39,31 @@ export async function POST(request: NextRequest) {
 
     const paymentRef = `VC${Date.now()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-    const payment = await prisma.payment.create({
-      data: {
-        userId: user.id,
-        amount,
-        plan,
-        classKey: classKey ?? null,
-        paymentMethod,
-        transactionId: paymentRef,
-        status: 'pending',
-      },
-    });
+    // Create the payment and its pending subscription atomically — a payment can
+    // never exist without its linked subscription (or vice versa).
+    const payment = await prisma.$transaction(async (tx) => {
+      const created = await tx.payment.create({
+        data: {
+          userId: user.id,
+          amount,
+          plan,
+          classKey: classKey ?? null,
+          paymentMethod,
+          transactionId: paymentRef,
+          status: 'pending',
+        },
+      });
 
-    await createSubscriptionForPayment({
-      userId: user.id,
-      plan,
-      classKey,
-      amount,
-      paymentId: payment.id,
-      status: 'pending',
+      await createSubscriptionForPayment({
+        userId: user.id,
+        plan,
+        classKey,
+        amount,
+        paymentId: created.id,
+        status: 'pending',
+      }, tx);
+
+      return created;
     });
 
     return NextResponse.json({

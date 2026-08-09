@@ -36,6 +36,11 @@ export async function POST(request: NextRequest) {
   try {
     const { lessonId, progress = 0, watchSeconds, timeSpentSeconds = 0, completed = false } = parsed.data;
 
+    // A lesson can only become completed when progress reaches 100. This is the
+    // only transition that grants completion rewards / unit XP.
+    const shouldComplete = completed && progress >= 100;
+    const clampedProgress = Math.min(100, Math.max(0, progress));
+
     const lesson = await prisma.lesson.findUnique({
       where: { id: lessonId },
     });
@@ -57,15 +62,21 @@ export async function POST(request: NextRequest) {
       const updated = await prisma.userLessonProgress.update({
         where: { id: existingProgress.id },
         data: {
-          progress: Math.max(existingProgress.progress || 0, progress),
-          watchSeconds: watchSeconds !== undefined ? watchSeconds : existingProgress.watchSeconds,
+          // Progress only ever increases and is clamped to [0, 100].
+          progress: Math.max(existingProgress.progress || 0, clampedProgress),
+          // Watch position is monotonic to prevent a client rewinding to farm resumes.
+          watchSeconds:
+            watchSeconds !== undefined
+              ? Math.max(existingProgress.watchSeconds || 0, watchSeconds)
+              : existingProgress.watchSeconds,
+          // Per-request time is already capped by the schema (max 600s).
           timeSpentSeconds: (existingProgress.timeSpentSeconds || 0) + timeSpentSeconds,
-          completed: completed || existingProgress.completed || false,
-          completedAt: completed ? new Date() : existingProgress.completedAt,
+          completed: shouldComplete || existingProgress.completed || false,
+          completedAt: shouldComplete ? new Date() : existingProgress.completedAt,
         },
       });
 
-      if (completed && !existingProgress.completed) {
+      if (shouldComplete && !existingProgress.completed) {
         await createNotification({
           userId: user.id,
           type: 'achievement',
@@ -84,11 +95,11 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         lessonId,
-        progress,
-        watchSeconds: watchSeconds ?? 0,
+        progress: clampedProgress,
+        watchSeconds: watchSeconds !== undefined ? Math.max(0, watchSeconds) : 0,
         timeSpentSeconds,
-        completed,
-        completedAt: completed ? new Date() : null,
+        completed: shouldComplete,
+        completedAt: shouldComplete ? new Date() : null,
       },
     });
 
@@ -96,7 +107,7 @@ export async function POST(request: NextRequest) {
     await touchStreak(user.id);
     await awardXp(user.id, XP.LESSON_WATCH, 'lesson_watch');
 
-    if (completed) {
+    if (shouldComplete) {
       await createNotification({
         userId: user.id,
         type: 'achievement',

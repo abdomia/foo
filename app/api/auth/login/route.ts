@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { getUserByEmailWithPassword, updateUser } from '@/lib/db';
+import { getUserByEmailWithPassword } from '@/lib/db';
 import { verifyPassword } from '@/lib/password';
 import {
   sanitizeUser,
@@ -70,28 +70,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isBcryptHash = /^\$2[aby]\$\d{2}\$/.test(user.password);
-    let passwordValid = false;
-    let legacyPlaintext = false;
-
-    if (isBcryptHash) {
-      passwordValid = await verifyPassword(password, user.password);
-    } else if (user.password === password) {
-      // Legacy accounts from the old system stored plaintext passwords.
-      // Upgrade them to a bcrypt hash on first successful login.
-      legacyPlaintext = true;
-      passwordValid = true;
-    }
+    // Only bcrypt hashes are accepted. All accounts have been migrated off
+    // plaintext passwords; there is no plaintext fallback anymore.
+    const passwordValid = await verifyPassword(password, user.password);
 
     if (!passwordValid) {
       return NextResponse.json(
         { success: false, error: 'البريد الإلكتروني أو كلمة المرور غير صحيحة' },
         { status: 401 }
       );
-    }
-
-    if (legacyPlaintext) {
-      await updateUser(user.id, { password });
     }
 
     // Device-limit enforcement (admins bypass).

@@ -30,7 +30,9 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
+    // Private storage: files are never served from `public`. They are streamed
+    // through the authorized endpoint GET /api/files/pdf/[id].
+    const uploadsDir = path.join(process.cwd(), 'private', 'uploads');
     
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true });
@@ -42,7 +44,8 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filePath, buffer);
 
-    const fileUrl = `/uploads/${fileName}`;
+    // The returned value is the stored file name (resolved server-side later).
+    const fileUrl = fileName;
 
     return NextResponse.json({ 
       success: true, 

@@ -222,7 +222,7 @@ export default function PdfsPage() {
               ) : (
                 <motion.a
                   key={pdf.id}
-                  href={pdf.fileUrl}
+                  href={`/api/files/pdf/${pdf.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   initial={{ opacity: 0, y: 20 }}

@@ -4,15 +4,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/uploads/:path*',
-        headers: [
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: '*',
-          },
-        ],
-      },
-      {
         source: '/(.*)',
         headers: [
           { key: 'X-Frame-Options', value: 'SAMEORIGIN' },

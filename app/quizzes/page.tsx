@@ -273,8 +273,6 @@ export default function QuizzesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           quizId: selectedQuiz.id,
-          score: percentage,
-          passed,
           answers: Object.entries(answers).map(([id, selected]) => ({ id, selected })),
         }),
       });

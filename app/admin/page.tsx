@@ -1528,7 +1528,7 @@ const handleUpdatePdf = async () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(pdf.fileUrl, '_blank')}
+                            onClick={() => window.open(`/api/files/pdf/${pdf.id}`, '_blank')}
                           >
                             <ArrowRight className="w-4 h-4" />
                           </Button>
