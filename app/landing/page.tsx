@@ -407,7 +407,7 @@ export default function LandingPage() {
               </p>
 
               <p className="hero-description text-sm sm:text-base text-text-muted mb-6 max-w-lg mx-auto lg:mx-0">
-                الصف الثالث الثانوي | الاحصاء — تعلم بطريقة سهلة وممتعة مع أفضل المعلمين
+                منصة تعليمية مصرية متخصصة في تعليم مادتي الرياضيات والإحصاء، نساعد طلاب الثانوية العامة على تحقيق أعلى الدرجات.
               </p>
 
               <div className="hero-cta flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">

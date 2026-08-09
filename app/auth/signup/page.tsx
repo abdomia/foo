@@ -280,6 +280,7 @@ export default function SignupPage() {
                   >
                     <option value="" disabled>اختر السنة الدراسية</option>
                     <option value="third_preparatory">الصف الثالث الاعدادي</option>
+                    <option value="first_secondary">الصف الأول الثانوي</option>
                     <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
                     <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
                     <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
