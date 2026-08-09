@@ -152,6 +152,11 @@ function SearchResults({ data }: { data: SearchData }) {
   );
 }
 
+function flattenResults(data: SearchData): SearchResult[] {
+  const typeOrder: ResultType[] = ['lesson', 'topic', 'pdf', 'quiz', 'question'];
+  return typeOrder.flatMap((type) => data.results[type] ?? []);
+}
+
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -160,15 +165,19 @@ function SearchContent() {
   const [data, setData] = useState<SearchData | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const boxRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (query.trim().length < 2) {
       setData(null);
       setHasSearched(false);
+      setDropdownOpen(false);
       return;
     }
     setLoading(true);
+    setDropdownOpen(true);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       try {
@@ -192,12 +201,25 @@ function SearchContent() {
     };
   }, [query]);
 
+  useEffect(() => {
+    const onMouseDown = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
     router.push(`/search?q=${encodeURIComponent(q)}`);
   };
+
+  const dropdownItems = data ? flattenResults(data).slice(0, 8) : [];
+  const showDropdown = dropdownOpen && query.trim().length >= 2;
 
   return (
     <MainLayout>
@@ -209,21 +231,28 @@ function SearchContent() {
           </p>
         </div>
 
-        <Card>
+        <Card ref={boxRef}>
           <CardContent className="p-4">
             <form onSubmit={handleSubmit} className="relative">
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
               <input
                 autoFocus
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setDropdownOpen(true);
+                }}
+                onFocus={() => setDropdownOpen(true)}
                 placeholder="ابحث عن درس، سؤال، اختبار... مثال: الانحراف المعياري"
                 className="w-full pr-12 pl-12 py-3 rounded-xl bg-surface border border-border text-text-primary placeholder:text-text-secondary/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
               {query && (
                 <button
                   type="button"
-                  onClick={() => setQuery('')}
+                  onClick={() => {
+                    setQuery('');
+                    setDropdownOpen(false);
+                  }}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
                 >
                   <X className="w-5 h-5" />
@@ -236,6 +265,76 @@ function SearchContent() {
                 <CornerDownLeft className="w-4 h-4" />
               </button>
             </form>
+
+            {showDropdown && (
+              <div className="mt-2 rounded-xl border border-border bg-surface shadow-xl overflow-hidden animate-fade-in">
+                {loading && dropdownItems.length === 0 && (
+                  <div className="p-4 text-center text-sm text-text-secondary">
+                    جاري البحث...
+                  </div>
+                )}
+                {!loading && dropdownItems.length === 0 && (
+                  <div className="p-4 text-center text-sm text-text-secondary">
+                    لا توجد نتائج مطابقة
+                  </div>
+                )}
+                {dropdownItems.length > 0 && (
+                  <ul className="max-h-96 overflow-y-auto">
+                    {dropdownItems.map((item) => {
+                      const meta = TYPE_META[item.type];
+                      const Icon = meta.icon;
+                      const title =
+                        item.type === 'question' ? item.question : item.title ?? '';
+                      return (
+                        <li key={`${item.type}-${item.id}`}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDropdownOpen(false);
+                              router.push(item.href);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-right hover:bg-muted/50 transition-colors"
+                          >
+                            <div
+                              className={cn(
+                                'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+                                item.locked
+                                  ? 'bg-muted text-text-secondary'
+                                  : 'bg-primary/10 text-primary'
+                              )}
+                            >
+                              {item.locked ? (
+                                <Lock className="w-4 h-4" />
+                              ) : (
+                                <Icon className="w-4 h-4" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-text-primary truncate">
+                                {title}
+                              </p>
+                              {(item.type === 'question'
+                                ? item.topic?.title
+                                : item.description || item.snippet) && (
+                                <p className="text-xs text-text-secondary truncate">
+                                  {item.type === 'question'
+                                    ? item.topic?.title
+                                    : item.description || item.snippet}
+                                </p>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-text-secondary flex-shrink-0 bg-muted px-2 py-0.5 rounded-full">
+                              {meta.label}
+                            </span>
+                            <ArrowLeft className="w-4 h-4 text-text-secondary flex-shrink-0" />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
 
