@@ -57,6 +57,8 @@ export default function LessonsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const urlTopic = new URLSearchParams(window.location.search).get('topic');
+    if (urlTopic) activeTopicIdRef.current = urlTopic;
     fetchTopics().then((result) => {
       if (cancelled) return;
       setTopics(result);

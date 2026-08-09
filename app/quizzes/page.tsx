@@ -180,6 +180,26 @@ export default function QuizzesPage() {
     fetchQuizzes();
   }, [fetchQuizzes]);
 
+  useEffect(() => {
+    if (isLoading || quizzes.length === 0) return;
+    const urlQuiz = new URLSearchParams(window.location.search).get('quiz');
+    if (!urlQuiz) return;
+    const target = quizzes.find((q) => q.id === urlQuiz);
+    if (!target) return;
+    if (target.locked) {
+      router.push('/subscribe');
+      return;
+    }
+    setSelectedQuiz(target);
+    setPhase('intro');
+    setCurrentQuestionIndex(0);
+    setAnswers({});
+    setTimeLeft(null);
+    setResultAnalysis([]);
+    setResultScore(0);
+    setResultPassed(false);
+  }, [isLoading, quizzes, router]);
+
   const openQuiz = (quiz: Quiz) => {
     if (quiz.locked) {
       router.push('/subscribe');

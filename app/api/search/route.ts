@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
         description: topic.description,
         snippet: topic.description.slice(0, 180),
         grade: topic.grade ?? null,
-        href: `/lessons`,
+        href: `/lessons?topic=${topic.id}`,
       }));
       counts.topics = Math.max(total, scored.length);
     }
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
           grade: pdf.grade ?? null,
           locked: !!g.locked,
           accessType: pdf.accessType || 'FREE',
-          href: '/pdfs',
+          href: `/pdfs?highlight=${pdf.id}`,
         };
       });
 
@@ -283,7 +283,7 @@ export async function GET(request: NextRequest) {
           topic: quiz.topic ? { id: quiz.topic.id, title: quiz.topic.title } : null,
           locked: !!g.locked,
           accessType: quiz.accessType || 'FREE',
-          href: '/quizzes',
+          href: `/quizzes?quiz=${quiz.id}`,
         };
       });
 
@@ -376,7 +376,13 @@ export async function GET(request: NextRequest) {
           context,
           locked,
           accessType,
-          href: question.quiz ? '/quizzes' : question.lesson ? `/lesson/${question.lesson.id}` : '/lessons',
+          href: question.quiz
+            ? `/quizzes?quiz=${question.quiz.id}`
+            : question.lesson
+              ? `/lesson/${question.lesson.id}`
+              : question.topic
+                ? `/lessons?topic=${question.topic.id}`
+                : '/lessons',
         };
       });
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -62,9 +62,13 @@ export default function PdfsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryType>('explanation');
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const highlightRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     fetchPdfs();
+    const urlHighlight = new URLSearchParams(window.location.search).get('highlight');
+    if (urlHighlight) setHighlightId(urlHighlight);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.grade]);
 
@@ -89,9 +93,18 @@ export default function PdfsPage() {
         pdf.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pdf.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = !activeCategory || pdf.category === activeCategory;
-      return matchesSearch && matchesCategory;
+      const isHighlighted = pdf.id === highlightId;
+      return (matchesSearch && matchesCategory) || isHighlighted;
     })
     .sort((a: PdfItem, b: PdfItem) => (a.order || 0) - (b.order || 0));
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const timer = setTimeout(() => {
+      highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [highlightId, filteredPdfs.length]);
 
   const categoryCounts = allPdfs.reduce((acc: Record<string, number>, pdf: PdfItem) => {
     const cat = pdf.category || 'explanation';
@@ -244,7 +257,15 @@ export default function PdfsPage() {
                   </Card>
                 </motion.a>
               );
-              return wrapper;
+              return (
+                <div
+                  key={pdf.id}
+                  ref={pdf.id === highlightId ? highlightRef : undefined}
+                  className={pdf.id === highlightId ? 'ring-2 ring-primary rounded-xl' : ''}
+                >
+                  {wrapper}
+                </div>
+              );
             })}
           </div>
         )}
