@@ -32,8 +32,8 @@ export const CLASSES: ClassGroup[] = [
     icon: 'GraduationCap',
     plans: [
       { id: 'monthly', name: 'اشتراك شهري', price: 100, period: 'شهرياً' },
-      { id: 'semester', name: 'اشتراك فصل دراسي', price: 250, period: 'للفصل الدراسي' },
-      { id: 'yearly', name: 'اشتراك سنوي', price: 400, period: 'سنوياً' },
+      { id: 'semester', name: 'اشتراك فصل دراسي', price: 400, period: 'للفصل الدراسي' },
+      { id: 'yearly', name: 'اشتراك سنوي', price: 750, period: 'سنوياً' },
     ],
   },
   {
@@ -43,7 +43,7 @@ export const CLASSES: ClassGroup[] = [
     icon: 'BookOpen',
     plans: [
       { id: 'monthly', name: 'اشتراك شهري', price: 125, period: 'شهرياً' },
-      { id: 'semester', name: 'اشتراك فصل دراسي', price: 450, period: 'للفصل الدراسي' },
+      { id: 'semester', name: 'اشتراك فصل دراسي', price: 500, period: 'للفصل الدراسي' },
       { id: 'yearly', name: 'اشتراك سنوي', price: 1000, period: 'سنوياً' },
     ],
   },
@@ -54,7 +54,7 @@ export const CLASSES: ClassGroup[] = [
     icon: 'BarChart3',
     plans: [
       { id: 'monthly', name: 'اشتراك شهري', price: 150, period: 'شهرياً' },
-      { id: 'semester', name: 'اشتراك فصل دراسي', price: 500, period: 'للفصل الدراسي' },
+      { id: 'semester', name: 'اشتراك فصل دراسي', price: 600, period: 'للفصل الدراسي' },
       { id: 'yearly', name: 'اشتراك سنوي', price: 1100, period: 'سنوياً' },
     ],
   },
@@ -65,7 +65,7 @@ export const CLASSES: ClassGroup[] = [
     icon: 'Sparkles',
     plans: [
       { id: 'monthly', name: 'اشتراك شهري', price: 200, period: 'شهرياً' },
-      { id: 'semester', name: 'اشتراك فصل دراسي', price: 600, period: 'للفصل الدراسي' },
+      { id: 'semester', name: 'اشتراك فصل دراسي', price: 800, period: 'للفصل الدراسي' },
       { id: 'yearly', name: 'اشتراك سنوي', price: 1500, period: 'سنوياً' },
     ],
   },
@@ -76,7 +76,7 @@ export const CLASSES: ClassGroup[] = [
     icon: 'Target',
     plans: [
       { id: 'monthly', name: 'اشتراك شهري', price: 250, period: 'شهرياً' },
-      { id: 'semester', name: 'اشتراك فصل دراسي', price: 750, period: 'للفصل الدراسي' },
+      { id: 'semester', name: 'اشتراك فصل دراسي', price: 1000, period: 'للفصل الدراسي' },
       { id: 'yearly', name: 'اشتراك سنوي', price: 2000, period: 'سنوياً' },
     ],
   },
