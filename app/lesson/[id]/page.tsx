@@ -170,7 +170,7 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
   return (
     <MainLayout>
       <div className="space-y-6 animate-fade-in">
-        <div className="flex items-center gap-2 text-sm text-text-secondary">
+        <div className="flex items-center gap-2 text-sm text-text-secondary flex-wrap">
           <Link href="/" className="hover:text-text-primary flex items-center gap-1">
             <Home className="w-4 h-4" />
             الرئيسية
@@ -184,13 +184,13 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
         </div>
 
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
               <Play className="w-7 h-7" />
             </div>
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold text-text-primary">{lesson.title}</h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center gap-2 mt-1 flex-wrap">
                 <Badge variant="secondary" className="gap-1">
                   <BookOpen className="w-3 h-3" />
                   {topic.title}

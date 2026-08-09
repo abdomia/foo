@@ -136,6 +136,7 @@
 html {
   direction: rtl;
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -144,6 +145,7 @@ body {
   font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
   line-height: 1.6;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 ::selection {

@@ -84,7 +84,7 @@ export default function AdminPaymentsPage() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">مديرية المدفوعات</h1>
             <p className="text-muted-foreground mt-1">التحقق من مدفوعات فودافون كاش</p>
@@ -182,7 +182,7 @@ export default function AdminPaymentsPage() {
                 ) : (
                   <div className="space-y-2">
                     {approvedPayments.map((payment) => (
-                      <div key={payment.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div key={payment.id} className="flex items-center justify-between p-3 bg-muted rounded-lg flex-wrap gap-2">
                         <div className="flex items-center gap-3">
                           <Check className="w-4 h-4 text-green-500" />
                           <div>

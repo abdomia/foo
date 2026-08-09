@@ -272,12 +272,12 @@ export function VideoPlayer({
         />
 
         <motion.div
-          className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full"
+          className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full max-w-[80%]"
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          <p className="text-white text-sm font-medium">🎬 {title}</p>
+          <p className="text-white text-sm font-medium truncate">🎬 {title}</p>
         </motion.div>
       </motion.div>
 

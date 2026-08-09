@@ -515,7 +515,7 @@ export default function QuizzesPage() {
           <div className="max-w-3xl mx-auto">
             <Card>
               <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                   <div className="flex items-center gap-4">
                     <button
                       onClick={closeQuiz}
@@ -579,7 +579,7 @@ export default function QuizzesPage() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 flex-wrap gap-2">
                   <h3 className="text-xl font-bold text-text-primary">{currentQuestion?.question}</h3>
                   {currentQuestion && <DifficultyBadge difficulty={currentQuestion.difficulty} />}
                 </div>
@@ -633,7 +633,7 @@ export default function QuizzesPage() {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between pt-4 border-t border-border">
+                <div className="flex items-center justify-between pt-4 border-t border-border flex-wrap gap-3">
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

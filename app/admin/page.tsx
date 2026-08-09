@@ -981,7 +981,7 @@ const handleUpdatePdf = async () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <h1 className="text-3xl font-bold text-foreground">لوحة التحكم</h1>
             <p className="text-muted-foreground mt-1">
@@ -992,8 +992,8 @@ const handleUpdatePdf = async () => {
               {activeTab === 'questionBank' && 'بنك الأسئلة'}
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Link href="/admin/reports" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 text-sm font-medium transition-colors">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Link href="/admin/reports" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 text-sm font-medium transition-colors whitespace-nowrap">
               <BarChart3 className="w-4 h-4" />
               التقارير
             </Link>
@@ -1020,10 +1020,10 @@ const handleUpdatePdf = async () => {
           </select>
         </div>
 
-        <div className="flex gap-2 mb-6 bg-muted p-1 rounded-xl w-fit">
+        <div className="flex gap-2 mb-6 bg-muted p-1 rounded-xl overflow-x-auto max-w-full">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'overview'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1034,7 +1034,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => setActiveTab('content')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'content'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1045,7 +1045,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => { setActiveTab('users'); fetchUsers(); }}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'users'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1056,7 +1056,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => setActiveTab('pdfs')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'pdfs'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1067,7 +1067,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => setActiveTab('quizzes')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'quizzes'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1078,7 +1078,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => setActiveTab('questionBank')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'questionBank'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1089,7 +1089,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => { setActiveTab('advice'); fetchAdvice(); }}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'advice'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1100,7 +1100,7 @@ const handleUpdatePdf = async () => {
           </button>
           <button
             onClick={() => setActiveTab('settings')}
-            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+            className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 whitespace-nowrap flex-shrink-0 ${
               activeTab === 'settings'
                 ? 'bg-primary text-white'
                 : 'text-muted-foreground hover:text-foreground'
@@ -1140,7 +1140,7 @@ const handleUpdatePdf = async () => {
                   {subscriptionCodes.map((sc) => (
                     <div
                       key={sc.id}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2"
                     >
                       <div className="flex items-center gap-3">
                         {sc.isUsed ? (
@@ -1279,7 +1279,7 @@ const handleUpdatePdf = async () => {
                               {topic.lessons.map((lesson) => (
                                 <div
                                   key={lesson.id}
-                                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                                  className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2"
                                 >
                                   <div className="flex items-center gap-3">
                                     <Video className="w-4 h-4 text-muted-foreground" />
@@ -1354,7 +1354,7 @@ const handleUpdatePdf = async () => {
                                 }
                                 setDraggedPdf(null);
                               }}
-                              className={`flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-move ${
+                              className={`flex items-center justify-between p-3 bg-muted/30 rounded-lg cursor-move flex-wrap gap-2 ${
                                 draggedPdf?.id === pdf.id ? 'opacity-50' : ''
                               }`}
                             >
@@ -1397,7 +1397,7 @@ const handleUpdatePdf = async () => {
                         <div className="mt-4 space-y-2">
                           <p className="text-sm font-medium text-muted-foreground">الاختبارات:</p>
                           {filteredQuizzes.filter((q: any) => q.topicId === topic.id).map((quiz: any) => (
-                            <div key={quiz.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                            <div key={quiz.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                               <div className="flex items-center gap-3">
                                 <ClipboardList className="w-4 h-4 text-muted-foreground" />
                                 <div>
@@ -1516,7 +1516,7 @@ const handleUpdatePdf = async () => {
                 return (
                   <div className="space-y-2">
                     {filteredPdfs.map((pdf: any) => (
-                      <div key={pdf.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div key={pdf.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                         <div className="flex items-center gap-3">
                           <FileText className="w-5 h-5 text-muted-foreground" />
                           <div>
@@ -1593,7 +1593,7 @@ const handleUpdatePdf = async () => {
                   {filteredQuizzes.map((quiz: any) => {
                     const topic = topics.find((t: any) => t.id === quiz.topicId);
                     return (
-                      <div key={quiz.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div key={quiz.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                         <div className="flex items-center gap-3">
                           <ClipboardList className="w-5 h-5 text-muted-foreground" />
                           <div>
@@ -1642,7 +1642,7 @@ const handleUpdatePdf = async () => {
               ) : (
                 <div className="space-y-3">
                   {filteredAdvice.map((item: any) => (
-                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">
                           {item.type === 'video' ? (
