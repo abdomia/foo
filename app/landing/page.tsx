@@ -669,12 +669,12 @@ export default function LandingPage() {
                     key={plan.id}
                     className={cn(
                       'relative bg-surface-card border-border card-hover',
-                      featured && 'ring-2 ring-primary'
+                      featured && 'ring-2 ring-primary shadow-xl lg:scale-105'
                     )}
                   >
                     {featured && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                        <Badge variant="default" className="whitespace-nowrap">الأفضل قيمة</Badge>
+                        <Badge variant="default" className="whitespace-nowrap">الأكثر اختيارًا</Badge>
                       </div>
                     )}
                     <CardContent className="p-6 text-center">
