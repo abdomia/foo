@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth';
+import { getClassByKey } from '@/lib/classes';
 import { getEffectiveAccessLevel, gateLesson, gatePdf, gateQuiz } from '@/lib/content-access';
 
 const LIMIT = 8;
@@ -48,7 +49,11 @@ export async function GET(request: NextRequest) {
   // Only show content for the student's grade + general content (grade = null).
   // NOTE: this must be combined with the OR match clause via AND, never spread
   // as a sibling `OR` key (that would overwrite the match clause).
-  const gradeClause = user?.grade ? [{ grade: user.grade }, { grade: null }] : [];
+  // A stale/invalid grade value (e.g. an old Arabic display name) must never
+  // silently hide everything, so fall back to unscoped search when the stored
+  // grade is not a recognized class key.
+  const grade = user?.grade && getClassByKey(user.grade) ? user.grade : null;
+  const gradeClause = grade ? [{ grade }, { grade: null }] : [];
 
   const matchField = (field: string) =>
     terms.map((t) => ({ [field]: { contains: t, mode: 'insensitive' as const } }));
@@ -102,10 +107,17 @@ export async function GET(request: NextRequest) {
 
       const scored = dbLessons
         .map((lesson) => {
-          const body = [lesson.description, lesson.summary, ...keyPoints(lesson.keyPoints), ...fileTitles(lesson.files)]
+          const topicTitle = lesson.topic?.title ?? '';
+          const body = [
+            lesson.description,
+            lesson.summary,
+            topicTitle,
+            ...keyPoints(lesson.keyPoints),
+            ...fileTitles(lesson.files),
+          ]
             .join(' ')
             .trim();
-          const extraMatch = includesTerm([...keyPoints(lesson.keyPoints), ...fileTitles(lesson.files)], terms);
+          const extraMatch = includesTerm([topicTitle, ...keyPoints(lesson.keyPoints), ...fileTitles(lesson.files)], terms);
           return {
             lesson,
             body,
@@ -182,6 +194,9 @@ export async function GET(request: NextRequest) {
       const [pdfs, total] = await Promise.all([
         prisma.pdf.findMany({
           where,
+          include: {
+            topic: { select: { id: true, title: true, grade: true } },
+          },
           orderBy: { order: 'asc' },
           take: BATCH,
         }),
@@ -189,7 +204,11 @@ export async function GET(request: NextRequest) {
       ]);
 
       const scored = pdfs
-        .map((pdf) => ({ pdf, score: rankScore(pdf.title, pdf.description ?? '', terms) }))
+        .map((pdf) => {
+          const topicTitle = pdf.topic?.title ?? '';
+          const body = [pdf.description ?? '', topicTitle].join(' ').trim();
+          return { pdf, score: rankScore(pdf.title, body, terms) };
+        })
         .filter((p) => p.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, LIMIT);
@@ -233,7 +252,11 @@ export async function GET(request: NextRequest) {
       ]);
 
       const scored = quizzes
-        .map((quiz) => ({ quiz, score: rankScore(quiz.title, quiz.description ?? '', terms) }))
+        .map((quiz) => {
+          const topicTitle = quiz.topic?.title ?? '';
+          const body = [quiz.description ?? '', topicTitle].join(' ').trim();
+          return { quiz, score: rankScore(quiz.title, body, terms) };
+        })
         .filter((qz) => qz.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, LIMIT);
@@ -262,13 +285,13 @@ export async function GET(request: NextRequest) {
     if (!typeFilter || typeFilter === 'question') {
       // Grade scoping is enforced at the SQL level via the related
       // topic/lesson/quiz. Grade lives on context, not on the question itself.
-      const questionGradeClause = user?.grade
+      const questionGradeClause = grade
         ? [
-            { topic: { is: { grade: user.grade } } },
+            { topic: { is: { grade } } },
             { topic: { is: { grade: null } } },
-            { lesson: { is: { grade: user.grade } } },
+            { lesson: { is: { grade } } },
             { lesson: { is: { grade: null } } },
-            { quiz: { is: { grade: user.grade } } },
+            { quiz: { is: { grade } } },
             { quiz: { is: { grade: null } } },
             { topicId: null, lessonId: null, quizId: null },
           ]
@@ -298,17 +321,18 @@ export async function GET(request: NextRequest) {
       ]);
 
       const scored = questions
-        .map((question) => ({
-          question,
-          score: rankScore(question.question, question.explanation ?? '', terms),
-        }))
+        .map((question) => {
+          const topicTitle = question.topic?.title ?? '';
+          const body = [question.explanation ?? '', topicTitle].join(' ').trim();
+          return { question, score: rankScore(question.question, body, terms) };
+        })
         .filter((x) => x.score > 0)
         // Grade filter applied BEFORE sorting/slicing so a student's own grade
         // is never pushed out of the results by higher-scored foreign rows.
         .filter(({ question }) => {
-          if (!user?.grade) return true;
+          if (!grade) return true;
           const ctxGrade = question.topic?.grade ?? question.lesson?.grade ?? question.quiz?.grade ?? null;
-          return ctxGrade === null || ctxGrade === user.grade;
+          return ctxGrade === null || ctxGrade === grade;
         })
         .sort((a, b) => b.score - a.score)
         .slice(0, LIMIT);
