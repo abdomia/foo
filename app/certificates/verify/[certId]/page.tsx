@@ -34,11 +34,7 @@ export default function CertificateVerifyResultPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!certId) {
-      setError('رقم الشهادة مطلوب');
-      setLoading(false);
-      return;
-    }
+    if (!certId) return;
     fetch(`/api/certificates/verify/${encodeURIComponent(certId)}`)
       .then(async (res) => {
         const json = await res.json();
@@ -62,7 +58,20 @@ export default function CertificateVerifyResultPage() {
           </p>
         </div>
 
-        {loading ? (
+        {!certId ? (
+          <Card>
+            <CardContent className="p-10 text-center">
+              <div className="w-16 h-16 bg-destructive/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <XCircle className="w-8 h-8 text-destructive" />
+              </div>
+              <p className="font-bold text-text-primary mb-1">رقم الشهادة مطلوب</p>
+              <p className="text-text-secondary text-sm mb-4">لم يتم العثور على رقم شهادة</p>
+              <Link href="/certificates/verify">
+                <Button variant="outline">محاولة أخرى</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : loading ? (
           <Card>
             <CardContent className="p-10 text-center">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />

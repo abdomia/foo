@@ -36,7 +36,6 @@ import {
   Brain,
   FileQuestion,
   RefreshCw,
-  Sparkles
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -145,7 +144,7 @@ export default function ProgressPage() {
     thisWeek: { videosWatched: 0, questionsSolved: 0, exercisesCompleted: 0 }
   });
   const [activeAchievementTab, setActiveAchievementTab] = useState<'all' | 'lessons' | 'exercises' | 'quizzes'>('all');
-  const [showBadgeCelebration, setShowBadgeCelebration] = useState(false);
+  const setShowBadgeCelebration = useState(false)[1];
   const [celebratingBadge, setCelebratingBadge] = useState<string | null>(null);
 
   useEffect(() => {
@@ -162,6 +161,7 @@ export default function ProgressPage() {
       fetchWeeklyStats();
       fetchGamification();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -176,6 +176,7 @@ export default function ProgressPage() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
@@ -187,6 +188,7 @@ export default function ProgressPage() {
       fetchGamification();
     }, 30000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchStats = async () => {
@@ -221,8 +223,8 @@ export default function ProgressPage() {
       const res = await fetch('/api/admin/topics');
       const data = await res.json();
       if (data.success) {
-        const topicsWithProgress = await Promise.all(data.data.map(async (topic: any) => {
-          const lessonsWithProgress = await Promise.all(topic.lessons.map(async (lesson: any) => {
+        const topicsWithProgress = await Promise.all(data.data.map(async (topic: Topic) => {
+          const lessonsWithProgress = await Promise.all(topic.lessons.map(async (lesson: Lesson) => {
             try {
               const progressRes = await fetch(`/api/user/lesson-progress?lessonId=${lesson.id}`);
               const progressData = await progressRes.json();
@@ -231,7 +233,7 @@ export default function ProgressPage() {
               return { ...lesson, completed: false };
             }
           }));
-          const completedCount = lessonsWithProgress.filter((l: any) => l.completed).length;
+          const completedCount = lessonsWithProgress.filter((l: Lesson) => l.completed).length;
           return {
             ...topic,
             progress: Math.round((completedCount / (lessonsWithProgress.length || 1)) * 100),
@@ -261,7 +263,7 @@ export default function ProgressPage() {
 
         const res = await fetch(`/api/user/lesson-progress?date=${dateStr}`);
         const data = await res.json();
-        const count = data.success && data.data ? data.data.filter((p: any) => p.completed).length : 0;
+        const count = data.success && data.data ? data.data.filter((p: { completed: boolean }) => p.completed).length : 0;
 
         const isToday = i === 0;
         const isYesterday = i === 1;

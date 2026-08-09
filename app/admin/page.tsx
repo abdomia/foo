@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { QuizFormModal, EditQuizModal } from '@/components/admin/QuizModals';
+import { QuizFormModal, EditQuizModal, Quiz } from '@/components/admin/QuizModals';
 import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
 import QuestionBankSection from '@/components/admin/QuestionBankSection';
 import GenerateQuizModal from '@/components/admin/GenerateQuizModal';
@@ -77,6 +77,37 @@ interface Pdf {
   order: number;
   category?: string;
   accessType?: string;
+  grade?: string | null;
+}
+
+interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  grade?: string | null;
+  isSubscribed: boolean;
+  isAdmin?: boolean;
+  createdAt: string;
+  subscriptionExpiry?: string | null;
+}
+
+interface SubscriptionCode {
+  id: string;
+  code: string;
+  plan: string;
+  isUsed: boolean;
+  expiresAt: string;
+}
+
+interface Advice {
+  id: string;
+  title: string;
+  content: string;
+  type: string;
+  videoUrl?: string | null;
+  grade?: string | null;
+  createdAt: string;
 }
 
 export default function AdminPage() {
@@ -90,10 +121,10 @@ export default function AdminPage() {
   const [showTopicForm, setShowTopicForm] = useState(false);
   const [showLessonForm, setShowLessonForm] = useState(false);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(null);
-  const [subscriptionCodes, setSubscriptionCodes] = useState<any[]>([]);
+  const [subscriptionCodes, setSubscriptionCodes] = useState<SubscriptionCode[]>([]);
   const [showCodeForm, setShowCodeForm] = useState(false);
   const [codeForm, setCodeForm] = useState({ plan: 'monthly', durationDays: '30' });
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'users' | 'pdfs' | 'quizzes' | 'questionBank' | 'advice' | 'settings'>('overview');
   const [classFilter, setClassFilter] = useState<string>('');
 
@@ -126,17 +157,16 @@ export default function AdminPage() {
     grade: '',
   });
   const [showPdfForm, setShowPdfForm] = useState(false);
-  const [editingPdf, setEditingPdf] = useState<any>(null);
-  const [allPdfs, setAllPdfs] = useState<any[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [quizzes, setQuizzes] = useState<any[]>([]);
+  const [editingPdf, setEditingPdf] = useState<Pdf | null>(null);
+  const [allPdfs, setAllPdfs] = useState<Pdf[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [showQuizForm, setShowQuizForm] = useState(false);
-  const [editingQuiz, setEditingQuiz] = useState<any>(null);
+  const [editingQuiz, setEditingQuiz] = useState<Quiz | null>(null);
   const [showGenerateQuiz, setShowGenerateQuiz] = useState(false);
 
-  const [advice, setAdvice] = useState<any[]>([]);
+  const [advice, setAdvice] = useState<Advice[]>([]);
   const [showAdviceForm, setShowAdviceForm] = useState(false);
-  const [editingAdvice, setEditingAdvice] = useState<any>(null);
+  const [editingAdvice, setEditingAdvice] = useState<Advice | null>(null);
   const [adviceForm, setAdviceForm] = useState({
     title: '',
     content: '',
@@ -145,8 +175,8 @@ export default function AdminPage() {
     grade: '',
   });
 
-  const [draggedPdf, setDraggedPdf] = useState<any>(null);
-  const [pdfsOrder, setPdfsOrder] = useState<{ [key: string]: any[] }>({});
+  const [draggedPdf, setDraggedPdf] = useState<Pdf | null>(null);
+  const [pdfsOrder, setPdfsOrder] = useState<Record<string, Pdf[]>>({});
 
   useEffect(() => {
     if (!authLoading && !user?.isAdmin) {
@@ -214,7 +244,7 @@ export default function AdminPage() {
 
   const exportUsersToExcel = async () => {
     const XLSX = await import('xlsx');
-    const worksheetData = users.map((u: any) => ({
+    const worksheetData = users.map((u: AdminUser) => ({
       'الاسم': u.name || '',
       'البريد الإلكتروني': u.email || '',
       'رقم الهاتف': u.phone || '',
@@ -481,7 +511,7 @@ const handleUpdatePdf = async () => {
       }
     };
 
-    const handleReorderPdfs = async (topicId: string, pdfs: any[]) => {
+    const handleReorderPdfs = async (topicId: string, pdfs: Pdf[]) => {
       try {
         for (let i = 0; i < pdfs.length; i++) {
           await fetch(`/api/admin/pdfs/${pdfs[i].id}`, {
@@ -495,39 +525,6 @@ const handleUpdatePdf = async () => {
         console.error('Failed to reorder pdfs:', error);
       }
     };
-
-  const handleUploadPdf = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf') {
-      alert('يرجى اختيار ملف PDF فقط');
-      return;
-    }
-
-    setIsUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/admin/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setPdfForm({ ...pdfForm, fileUrl: data.data.url });
-      } else {
-        alert('فشل رفع الملف');
-      }
-    } catch (error) {
-      console.error('Upload error:', error);
-      alert('فشل رفع الملف');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   useEffect(() => {
     if (user?.isAdmin) {
@@ -549,7 +546,7 @@ const handleUpdatePdf = async () => {
     }
   };
 
-  const handleCreateQuiz = async (quizData: any) => {
+  const handleCreateQuiz = async (quizData: Omit<Quiz, 'id'>) => {
     try {
       const res = await fetch('/api/admin/quizzes', {
         method: 'POST',
@@ -565,7 +562,7 @@ const handleUpdatePdf = async () => {
     }
   };
 
-  const handleUpdateQuiz = async (quizData: any) => {
+  const handleUpdateQuiz = async (quizData: Quiz) => {
     try {
       const res = await fetch(`/api/admin/quizzes/${quizData.id}`, {
         method: 'PUT',
@@ -1335,8 +1332,8 @@ const handleUpdatePdf = async () => {
                             <div
                               key={pdf.id}
                               draggable
-                              onDragStart={(e) => {
-                                setDraggedPdf({ ...pdf, topicId: topic.id, index });
+                              onDragStart={() => {
+                                setDraggedPdf(pdf);
                                 const currentPdfs = pdfsOrder[topic.id] || ((topic.pdfs || []).sort((a: Pdf, b: Pdf) => a.order - b.order));
                                 setPdfsOrder({ ...pdfsOrder, [topic.id]: currentPdfs });
                               }}
@@ -1393,10 +1390,10 @@ const handleUpdatePdf = async () => {
                         ) : null;
                               })()}
 
-                      {filteredQuizzes.filter((q: any) => q.topicId === topic.id).length > 0 && (
+                      {filteredQuizzes.filter((q: Quiz) => q.topicId === topic.id).length > 0 && (
                         <div className="mt-4 space-y-2">
                           <p className="text-sm font-medium text-muted-foreground">الاختبارات:</p>
-                          {filteredQuizzes.filter((q: any) => q.topicId === topic.id).map((quiz: any) => (
+                          {filteredQuizzes.filter((q: Quiz) => q.topicId === topic.id).map((quiz: Quiz) => (
                             <div key={quiz.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                               <div className="flex items-center gap-3">
                                 <ClipboardList className="w-4 h-4 text-muted-foreground" />
@@ -1411,7 +1408,7 @@ const handleUpdatePdf = async () => {
                                 <Button variant="ghost" size="sm" onClick={() => setEditingQuiz(quiz)}>
                                   <Edit2 className="w-4 h-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" onClick={() => handleDeleteQuiz(quiz.id)}>
+                                <Button variant="ghost" size="sm" onClick={() => quiz.id && handleDeleteQuiz(quiz.id)}>
                                   <Trash2 className="w-4 h-4 text-destructive" />
                                 </Button>
                               </div>
@@ -1459,7 +1456,7 @@ const handleUpdatePdf = async () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((u: any) => (
+                      {filteredUsers.map((u: AdminUser) => (
                         <tr key={u.id} className="border-b hover:bg-muted/30">
                           <td className="py-2 px-2">{u.name || '-'}</td>
                           <td className="py-2 px-2">{u.email || '-'}</td>
@@ -1502,27 +1499,27 @@ const handleUpdatePdf = async () => {
                   quizzes: 'بنك اسئلة',
                 };
                 const filteredPdfs = classFilter
-                  ? allPdfs.filter((p: any) => p.grade === classFilter || !p.grade)
+                  ? allPdfs.filter((p: Pdf) => p.grade === classFilter || !p.grade)
                   : allPdfs;
                 if (filteredPdfs.length === 0) {
                   return (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
                       <p>لا توجد ملفات PDF حالياً</p>
-                      <p className="text-sm mt-2">اضغط على "إضافة ملف" لإضافة ملف جديد</p>
+                      <p className="text-sm mt-2">اضغط على &quot;إضافة ملف&quot; لإضافة ملف جديد</p>
                     </div>
                   );
                 }
                 return (
                   <div className="space-y-2">
-                    {filteredPdfs.map((pdf: any) => (
+                    {filteredPdfs.map((pdf: Pdf) => (
                       <div key={pdf.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                         <div className="flex items-center gap-3">
                           <FileText className="w-5 h-5 text-muted-foreground" />
                           <div>
                             <p className="font-medium">{pdf.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {pdfCategoryLabels[pdf.category] || pdf.category}
+                              {pdfCategoryLabels[pdf.category ?? ''] || pdf.category}
                               {pdf.grade ? ` - ${getClassByKey(pdf.grade)?.short || pdf.grade}` : ' - كل الصفوف'}
                             </p>
                           </div>
@@ -1586,12 +1583,12 @@ const handleUpdatePdf = async () => {
                 <div className="text-center py-8 text-muted-foreground">
                   <ClipboardList className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
                   <p>لا توجد اختبارات حالياً</p>
-                  <p className="text-sm mt-2">اضغط على "إضافة اختبار" لإضافة اختبار جديد</p>
+                  <p className="text-sm mt-2">اضغط على &quot;إضافة اختبار&quot; لإضافة اختبار جديد</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredQuizzes.map((quiz: any) => {
-                    const topic = topics.find((t: any) => t.id === quiz.topicId);
+                  {filteredQuizzes.map((quiz: Quiz) => {
+                    const topic = topics.find((t: Topic) => t.id === quiz.topicId);
                     return (
                       <div key={quiz.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                         <div className="flex items-center gap-3">
@@ -1607,7 +1604,7 @@ const handleUpdatePdf = async () => {
                           <Button variant="ghost" size="sm" onClick={() => setEditingQuiz(quiz)}>
                             <Edit2 className="w-4 h-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteQuiz(quiz.id)}>
+                          <Button variant="ghost" size="sm" onClick={() => quiz.id && handleDeleteQuiz(quiz.id)}>
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
                         </div>
@@ -1637,11 +1634,11 @@ const handleUpdatePdf = async () => {
                 <div className="text-center py-8 text-muted-foreground">
                   <Lightbulb className="w-10 h-10 mx-auto mb-3 text-muted-foreground" />
                   <p>لا توجد نصائح حالياً</p>
-                  <p className="text-sm mt-2">اضغط على "إضافة نصيحة" لإضافة نصيحة جديدة</p>
+                  <p className="text-sm mt-2">اضغط على &quot;إضافة نصيحة&quot; لإضافة نصيحة جديدة</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {filteredAdvice.map((item: any) => (
+                  {filteredAdvice.map((item: Advice) => (
                     <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg flex-wrap gap-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-primary/20 rounded-xl flex items-center justify-center">

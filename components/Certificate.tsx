@@ -10,12 +10,11 @@ interface CertificateProps {
 export function Certificate({ userName, onClose }: CertificateProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(true);
 
   const generateCertificate = useCallback(() => {
     if (!canvasRef.current) return;
 
-    setIsGenerating(true);
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -128,6 +127,7 @@ export function Certificate({ userName, onClose }: CertificateProps) {
 export function CertificateSimple({ userName }: { userName: string }) {
   return (
     <div className="relative w-full bg-white rounded-lg shadow-lg overflow-hidden">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/certifacate.jpeg"
         alt="شهادة إتمام"

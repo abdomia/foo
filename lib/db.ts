@@ -1,7 +1,14 @@
-import { PrismaClient, User as PrismaUser } from '@prisma/client';
+import {
+  PrismaClient,
+  User as PrismaUser,
+  SubscriptionCode as PrismaSubscriptionCode,
+  Prisma,
+} from '@prisma/client';
 import { hashPassword } from '@/lib/password';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+
+export type SafeUser = ReturnType<typeof toSafeUser>;
 
 // Fields the rest of the app needs for a User — never fetch the password hash
 // when only a SafeUser (session/profile) is required.
@@ -21,7 +28,9 @@ const USER_SAFE_SELECT = {
   createdAt: true,
 } as const;
 
-function toSafeUser(user: PrismaUser) {
+type SafeUserSelect = Prisma.UserGetPayload<{ select: typeof USER_SAFE_SELECT }>;
+
+function toSafeUser(user: SafeUserSelect) {
   return {
     id: user.id,
     name: user.name,
@@ -56,7 +65,7 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma;
 }
 
-export async function getUserById(id: string): Promise<any | null> {
+export async function getUserById(id: string): Promise<SafeUser | null> {
   if (!id) return null;
   try {
     const user = await prisma.user.findUnique({
@@ -64,14 +73,14 @@ export async function getUserById(id: string): Promise<any | null> {
       select: USER_SAFE_SELECT,
     });
     if (!user) return null;
-    return toSafeUser(user as PrismaUser);
+    return toSafeUser(user);
   } catch (error) {
     console.error('Error getting user by id:', error);
     return null;
   }
 }
 
-export async function getUserByEmail(email: string): Promise<any | null> {
+export async function getUserByEmail(email: string): Promise<SafeUser | null> {
   if (!email) return null;
   try {
     const user = await prisma.user.findUnique({
@@ -79,14 +88,14 @@ export async function getUserByEmail(email: string): Promise<any | null> {
       select: USER_SAFE_SELECT,
     });
     if (!user) return null;
-    return toSafeUser(user as PrismaUser);
+    return toSafeUser(user);
   } catch (error) {
     console.error('Error getting user by email:', error);
     return null;
   }
 }
 
-export async function getUserByEmailWithPassword(email: string): Promise<any | null> {
+export async function getUserByEmailWithPassword(email: string): Promise<PrismaUser | null> {
   if (!email) return null;
   try {
     return await prisma.user.findUnique({
@@ -107,7 +116,7 @@ export async function createUser(data: {
   avatar?: string;
   grade?: string;
   isSubscribed: boolean;
-}): Promise<any> {
+}): Promise<SafeUser> {
   const passwordHash = await hashPassword(data.password);
   const user = await prisma.user.create({
     data: {
@@ -135,9 +144,9 @@ export async function updateUser(id: string, data: Partial<{
   isSubscribed: boolean;
   subscriptionPlan: string | null;
   subscriptionExpiry: string | null;
-}>): Promise<any | null> {
+}>): Promise<SafeUser | null> {
   try {
-    const updateData: any = {};
+    const updateData: Prisma.UserUpdateInput = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.email !== undefined) updateData.email = data.email;
     if (data.password !== undefined) updateData.password = await hashPassword(data.password);
@@ -164,7 +173,7 @@ export async function createSubscriptionCode(data: {
   code: string;
   plan: string;
   expiresAt: Date;
-}): Promise<any> {
+}): Promise<PrismaSubscriptionCode> {
   const subscriptionCode = await prisma.subscriptionCode.create({
     data: {
       code: data.code,
@@ -175,14 +184,14 @@ export async function createSubscriptionCode(data: {
   return subscriptionCode;
 }
 
-export async function getAllSubscriptionCodes(): Promise<any[]> {
+export async function getAllSubscriptionCodes(): Promise<PrismaSubscriptionCode[]> {
   const codes = await prisma.subscriptionCode.findMany({
     orderBy: { createdAt: 'desc' },
   });
   return codes;
 }
 
-export async function getSubscriptionCodeByCode(code: string): Promise<any | null> {
+export async function getSubscriptionCodeByCode(code: string): Promise<PrismaSubscriptionCode | null> {
   const subscriptionCode = await prisma.subscriptionCode.findUnique({
     where: { code },
   });
@@ -190,7 +199,7 @@ export async function getSubscriptionCodeByCode(code: string): Promise<any | nul
   return subscriptionCode;
 }
 
-export async function useSubscriptionCode(code: string, userId: string): Promise<any | null> {
+export async function useSubscriptionCode(code: string, userId: string): Promise<PrismaSubscriptionCode | null> {
   const subscriptionCode = await prisma.subscriptionCode.findUnique({
     where: { code },
   });

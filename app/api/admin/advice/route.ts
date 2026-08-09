@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminAdviceSchema } from '@/lib/validation';
@@ -8,7 +9,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const grade = searchParams.get('grade');
 
-    const where: any = { isActive: true };
+    const where: Prisma.AdviceWhereInput = { isActive: true };
     if (grade) {
       where.OR = [
         { grade: grade },

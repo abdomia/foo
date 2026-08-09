@@ -464,7 +464,7 @@ export function CounterAnimation({
       ease: 'easeOut',
     });
     return controls.stop;
-  }, [value, motionValue]);
+  }, [value, motionValue, duration]);
 
   useEffect(() => {
     return roundedValue.on('change', (latest) => {

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/components/AuthProvider';
 import { useRouter } from 'next/navigation';
-import { Check, X, Clock, Phone, CreditCard, User, ArrowRight } from 'lucide-react';
+import { Check, X, Clock, Phone, ArrowRight } from 'lucide-react';
 
 interface Payment {
   id: string;

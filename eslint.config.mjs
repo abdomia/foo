@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Tooling / generated files that are not application code:
+    ".opencode/**",
+    "claude/**",
+    "scripts/**",
+    "public/**",
+    "prisma/**",
   ]),
 ]);
 

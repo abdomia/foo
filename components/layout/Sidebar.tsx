@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils';
 import {
   Home,
   BookOpen,
-  PenTool,
   ClipboardList,
   TrendingUp,
   X,
@@ -144,7 +143,7 @@ export function Sidebar() {
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-border">
+          <div className="p-6 border-b border-border flex-shrink-0">
             <div className="flex items-center justify-between">
               <Link href="/" className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -166,7 +165,7 @@ export function Sidebar() {
             </div>
           </div>
 
-            <nav className="flex-1 p-4">
+            <nav className="flex-1 min-h-0 overflow-y-auto p-4">
               <ul className="space-y-2">
               {(user?.role === 'parent' ? parentNavItems : navItems).map((item) => {
                 const isActive = pathname === item.href;
@@ -232,7 +231,7 @@ export function Sidebar() {
             </ul>
           </nav>
 
-          <div className="p-4 border-t border-border space-y-3">
+          <div className="p-4 border-t border-border space-y-3 flex-shrink-0">
             <button
               onClick={toggleTheme}
               className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-muted hover:bg-border transition-colors"

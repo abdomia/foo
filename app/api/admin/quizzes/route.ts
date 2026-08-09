@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized, forbidden } from '@/lib/auth';
 import { adminQuizSchema } from '@/lib/validation';
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     const user = await getSessionUser();
     const accessLevel = await getEffectiveAccessLevel(user);
 
-    const where: any = {};
+    const where: Prisma.QuizWhereInput = {};
     if (grade) {
       where.OR = [
         { grade: grade },

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'كود غير صالح أو منتهي الصلاحية' }, { status: 400 });
     }
 
-    const subscription = await activateSubscription({
+    await activateSubscription({
       userId: user.id,
       plan: subscriptionCode.plan,
       classKey: null,

@@ -63,7 +63,6 @@ export default function SubscribePage() {
   const activePlans = activeClass?.plans ?? [];
   const selectedPlanData = activePlans.find((p) => p.id === selectedPlan);
   const [paymentState, setPaymentState] = useState<PaymentState | null>(null);
-  const [vodafoneRef, setVodafoneRef] = useState('');
   const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -88,7 +87,7 @@ export default function SubscribePage() {
 
     const planData = activePlans.find((p) => p.id === selectedPlan);
     const amount = planData?.price;
-    const result = await subscribe(selectedPlan, 'vodafone_cash', selectedClass, amount);
+    const result = await subscribe(selectedPlan, 'vodafone_cash', selectedClass);
 
     if (result.success && result.paymentId) {
       setPaymentState({
@@ -360,7 +359,6 @@ export default function SubscribePage() {
                 variant="outline"
                 onClick={() => {
                   setPaymentState(null);
-                  setVodafoneRef('');
                 }}
                 className="flex-1"
                 disabled={isLoading}

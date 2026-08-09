@@ -7,27 +7,74 @@ import { Button } from '@/components/ui/button';
 import { Plus, Trash2, Save, X, Check } from 'lucide-react';
 import AccessTypeSelect from '@/components/admin/AccessTypeSelect';
 
-const quizFormInit = {
+interface QuizFormQuestion {
+  question: string;
+  type: string;
+  options: string[];
+  correctAnswer: string;
+  difficulty: string;
+  explanation: string;
+  imageUrl: string;
+}
+
+interface QuizFormData {
+  title: string;
+  description: string;
+  accessType: string;
+  timeLimit: string;
+  passingScore: string;
+  grade: string;
+  questions: QuizFormQuestion[];
+}
+
+interface TopicOption {
+  id: string;
+  title: string;
+}
+
+export interface Quiz {
+  id?: string;
+  title: string;
+  description?: string | null;
+  topicId?: string;
+  accessType?: string;
+  timeLimit?: number | null;
+  passingScore?: number | null;
+  grade?: string | null;
+  questions: QuizQuestion[];
+}
+
+export interface QuizQuestion {
+  id?: string;
+  question: string;
+  type: string;
+  difficulty?: string;
+  explanation?: string | null;
+  options: string[];
+  correctAnswer: string;
+}
+
+const quizFormInit: QuizFormData = {
   title: '',
   description: '',
   accessType: 'FREE',
   timeLimit: '',
   passingScore: '70',
   grade: '',
-  questions: [] as any[],
+  questions: [],
 };
 
 interface QuizFormModalProps {
   showQuizForm: boolean;
   setShowQuizForm: (show: boolean) => void;
-  topics: any[];
+  topics: TopicOption[];
   selectedTopicId?: string | null;
-  onSave: (quiz: any) => void;
+  onSave: (quiz: Quiz) => void;
 }
 
 export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedTopicId: initialTopicId, onSave }: QuizFormModalProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(initialTopicId || null);
-  const [quizForm, setQuizForm] = useState(quizFormInit);
+  const [quizForm, setQuizForm] = useState<QuizFormData>(quizFormInit);
 
   const addQuestion = () => {
     setQuizForm({
@@ -47,14 +94,14 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
     });
   };
 
-  const updateQuestion = (index: number, field: string, value: any) => {
+  const updateQuestion = (index: number, field: string, value: string | string[]) => {
     const newQuestions = [...quizForm.questions];
     newQuestions[index] = { ...newQuestions[index], [field]: value };
     setQuizForm({ ...quizForm, questions: newQuestions });
   };
 
   const removeQuestion = (index: number) => {
-    setQuizForm({ ...quizForm, questions: quizForm.questions.filter((_: any, i: number) => i !== index) });
+    setQuizForm({ ...quizForm, questions: quizForm.questions.filter((_, i: number) => i !== index) });
   };
 
   const handleSave = () => {
@@ -105,7 +152,7 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
               className="w-full px-3 py-2 bg-card border border-border rounded-lg text-foreground"
             >
               <option value="">اختر الموضوع</option>
-              {topics.map((t: any) => (
+              {topics.map((t: TopicOption) => (
                 <option key={t.id} value={t.id}>{t.title}</option>
               ))}
             </select>
@@ -167,7 +214,7 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
                 إضافة سؤال
               </Button>
             </div>
-            {quizForm.questions.map((q: any, index: number) => (
+            {quizForm.questions.map((q: QuizFormQuestion, index: number) => (
               <div key={index} className="bg-muted/50 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">سؤال {index + 1}</span>
@@ -216,6 +263,7 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
         />
         {q.imageUrl && (
           <div className="mt-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={q.imageUrl} alt="السؤال" className="max-w-xs rounded border border-gray-300" />
           </div>
         )}
@@ -280,9 +328,9 @@ export function QuizFormModal({ showQuizForm, setShowQuizForm, topics, selectedT
 }
 
 interface EditQuizModalProps {
-  editingQuiz: any;
-  setEditingQuiz: (quiz: any) => void;
-  onSave: (quiz: any) => void;
+  editingQuiz: Quiz | null;
+  setEditingQuiz: (quiz: Quiz | null) => void;
+  onSave: (quiz: Quiz) => void;
 }
 
 export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizModalProps) {
@@ -333,7 +381,7 @@ export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizM
               <label className="text-sm font-medium mb-2 block">درجة النجاح (%)</label>
             <Input
               type="number"
-              value={editingQuiz.passingScore}
+              value={editingQuiz.passingScore || ''}
               onChange={(e) => setEditingQuiz({ ...editingQuiz, passingScore: parseInt(e.target.value) })}
               className="bg-card border-border text-foreground"
             />
@@ -363,7 +411,7 @@ export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizM
               <label className="text-sm font-medium">الأسئلة</label>
               <Button
                 type="button"
-                onClick={() => setEditingQuiz({ ...editingQuiz, questions: [...editingQuiz.questions, { question: '', type: 'multiple-choice', options: ['', '', '', ''], correctAnswer: '', difficulty: 'medium', explanation: '', order: editingQuiz.questions.length }] })}
+                onClick={() => setEditingQuiz({ ...editingQuiz, questions: [...editingQuiz.questions, { question: '', type: 'multiple-choice', options: ['', '', '', ''], correctAnswer: '', difficulty: 'medium', explanation: '' }] })}
                 size="sm"
                 variant="outline"
                 className="gap-2"
@@ -372,11 +420,11 @@ export function EditQuizModal({ editingQuiz, setEditingQuiz, onSave }: EditQuizM
                 إضافة سؤال
               </Button>
             </div>
-            {editingQuiz.questions.map((q: any, index: number) => (
+            {editingQuiz.questions.map((q: QuizQuestion, index: number) => (
               <div key={q.id || index} className="bg-muted/50 rounded-lg p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">سؤال {index + 1}</span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditingQuiz({ ...editingQuiz, questions: editingQuiz.questions.filter((_: any, i: number) => i !== index) })}>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setEditingQuiz({ ...editingQuiz, questions: editingQuiz.questions.filter((_, i: number) => i !== index) })}>
                     <Trash2 className="w-4 h-4 text-destructive" />
                   </Button>
                 </div>

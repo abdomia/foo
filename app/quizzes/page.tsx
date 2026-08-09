@@ -575,6 +575,7 @@ export default function QuizzesPage() {
 
                 {currentQuestion?.imageUrl && (
                   <div className="mb-4">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={currentQuestion.imageUrl}
                       alt="السؤال"

@@ -9,10 +9,18 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
-import { Lesson, Topic } from '@/lib/data';
+import { Lesson, Topic, Exercise } from '@/lib/data';
 import { getExercisesByTopic } from '@/lib/data';
-import { Play, Clock, CheckCircle2, ArrowRight, X, BarChart3, TrendingUp, Crown, Lock, BookOpen, FileText, Download } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Play, Clock, CheckCircle2, ArrowRight, X, BarChart3, TrendingUp, Crown, Lock, BookOpen } from 'lucide-react';
+
+
+type LessonItem = (Lesson | Exercise) & {
+  completed?: boolean;
+  title?: string;
+  description?: string;
+  duration?: string;
+  accessType?: string;
+};
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
@@ -38,7 +46,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export default function LessonsPage() {
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
@@ -61,14 +69,14 @@ export default function LessonsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const fetchTopics = async (): Promise<any[]> => {
+  const fetchTopics = async (): Promise<Topic[]> => {
     try {
       const gradeParam = user?.grade ? `?grade=${user.grade}` : '';
       const res = await fetch(`/api/admin/topics${gradeParam}`);
       const data = await res.json();
       if (data.success) {
-        const topicsWithProgress = await Promise.all(data.data.map(async (topic: any) => {
-          const lessonsWithProgress = await Promise.all(topic.lessons.map(async (lesson: any) => {
+        const topicsWithProgress = await Promise.all(data.data.map(async (topic: Topic) => {
+          const lessonsWithProgress = await Promise.all(topic.lessons.map(async (lesson: Lesson) => {
             if (!user?.id) return { ...lesson, completed: false };
             try {
               const progressRes = await fetch(`/api/user/lesson-progress?lessonId=${lesson.id}`);
@@ -100,20 +108,20 @@ export default function LessonsPage() {
 
   // Get current topic
   const currentTopic = activeTopicId
-    ? topics.find((t: any) => t.id === activeTopicId)
+    ? topics.find((t: Topic) => t.id === activeTopicId)
     : topics[0];
 
-  const isLessonLocked = (item: any) => !!item.locked;
+  const isLessonLocked = (item: LessonItem) => 'locked' in item && !!item.locked;
 
   // For practices tab, show practice-specific lessons or exercises
     // For explanations tab, show only explanation lessons
     // For practices tab, show practice lessons AND exercises
     const explanationLessons = currentTopic?.lessons?.filter(
-        (lesson: any) => !lesson.type || lesson.type === 'explanation'
+        (lesson: Lesson) => !lesson.type || lesson.type === 'explanation'
     ) || [];
 
     const practiceLessons = currentTopic?.lessons?.filter(
-        (lesson: any) => lesson.type === 'practice'
+        (lesson: Lesson) => lesson.type === 'practice'
     ) || [];
 
     const practiceExercises = getExercisesByTopic(currentTopic?.id || '');
@@ -123,7 +131,7 @@ export default function LessonsPage() {
         ? [...practiceLessons, ...practiceExercises]
         : explanationLessons;
 
-    const handleLessonClick = (item: any) => {
+    const handleLessonClick = (item: LessonItem) => {
         if (!user) {
             router.push('/auth/login');
             return;
@@ -216,7 +224,7 @@ if (isLessonLocked(item)) {
               <CardContent className="p-4">
                 <h2 className="font-bold text-text-primary mb-4 px-2">المواضيع</h2>
                 <div className="space-y-2">
-                  {topics.map((topic: any) => {
+                  {topics.map((topic: Topic) => {
                     const IconComponent = iconMap[topic.icon];
                     const isActive = currentTopic?.id === topic.id;
                     return (
@@ -237,7 +245,7 @@ if (isLessonLocked(item)) {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm truncate">{topic.title}</p>
                           <p className="text-xs text-text-secondary">
-                          {(() => { const c = topic.lessons?.filter((l: any) => l.completed).length || 0; const t = topic.lessons?.length || 1; return `${Math.round(c/t*100)}% (${c}/${t})`; })()}
+                          {(() => { const c = topic.lessons?.filter((l: Lesson) => l.completed).length || 0; const t = topic.lessons?.length || 1; return `${Math.round(c/t*100)}% (${c}/${t})`; })()}
                         </p>
                         </div>
                         {isActive && <ArrowRight className="w-4 h-4" />}
@@ -269,8 +277,8 @@ if (isLessonLocked(item)) {
                       </div>
                       <Badge variant="secondary">{(() => {
                       const isPractice = activeTab === 'practices';
-                      const items = currentTopic.lessons?.filter((l: any) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
-                      const c = items.filter((l: any) => l.completed).length;
+                      const items = currentTopic.lessons?.filter((l: Lesson) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
+                      const c = items.filter((l: Lesson) => l.completed).length;
                       const t = items.length || 1;
                       return Math.round((c/t)*100);
                     })()}%</Badge>
@@ -278,16 +286,16 @@ if (isLessonLocked(item)) {
                     <ProgressBar
                       value={(() => {
                         const isPractice = activeTab === 'practices';
-                        const items = currentTopic.lessons?.filter((l: any) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
-                        const c = items.filter((l: any) => l.completed).length;
+                        const items = currentTopic.lessons?.filter((l: Lesson) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
+                        const c = items.filter((l: Lesson) => l.completed).length;
                         const t = items.length || 1;
                         return Math.round((c/t)*100);
                       })()}
                       size="sm"
                       color={(() => {
                         const isPractice = activeTab === 'practices';
-                        const items = currentTopic.lessons?.filter((l: any) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
-                        const c = items.filter((l: any) => l.completed).length;
+                        const items = currentTopic.lessons?.filter((l: Lesson) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
+                        const c = items.filter((l: Lesson) => l.completed).length;
                         const t = items.length || 1;
                         return Math.round((c/t)*100) >= 100 ? 'success' : 'primary';
                       })()}
@@ -296,7 +304,7 @@ if (isLessonLocked(item)) {
                 </Card>
 
                 <div className="space-y-3">
-                   {practiceItems.map((item: any, index: number) => (
+                   {practiceItems.map((item: LessonItem, index: number) => (
                      <Card
                        key={item.id}
                        className={`cursor-pointer transition-all hover:shadow-md ${

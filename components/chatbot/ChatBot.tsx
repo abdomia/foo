@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { X, MessageCircle, Send, Bot, ArrowDown } from 'lucide-react';
+import { Card } from '@/components/ui/card';
+import { X, MessageCircle, Send, Bot } from 'lucide-react';
 
 interface Message {
   id: string;

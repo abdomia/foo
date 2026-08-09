@@ -7,6 +7,7 @@ export interface Lesson {
   completed: boolean;
   topicId: string;
   type?: 'explanation' | 'practice';
+  locked?: boolean;
 }
 
 export interface Topic {
@@ -299,10 +300,10 @@ export async function fetchTopicsFromDB() {
     const res = await fetch('/api/admin/topics');
     const data = await res.json();
     if (data.success) {
-      return data.data.map((t: any) => ({
+      return data.data.map((t: Topic & { lessons: Lesson[] }) => ({
         ...t,
         progress: 0,
-        lessons: t.lessons.map((l: any) => ({
+        lessons: t.lessons.map((l) => ({
           ...l,
           completed: false,
           type: l.type || 'explanation',

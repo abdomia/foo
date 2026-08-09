@@ -27,6 +27,7 @@ export default function AdvicePage() {
 
   useEffect(() => {
     fetchAdvice();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchAdvice = async () => {
@@ -89,7 +90,7 @@ export default function AdvicePage() {
           </Card>
         ) : (
           <div className="space-y-6">
-            {advice.map((item, index) => (
+            {advice.map((item) => (
               <Card
                 key={item.id}
                 className="overflow-hidden hover:shadow-lg transition-shadow"

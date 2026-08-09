@@ -5,17 +5,14 @@ import { useRouter } from 'next/navigation';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/AuthProvider';
 import FavoriteButton from '@/components/FavoriteButton';
 import {
   FileText,
-  Download,
   BookOpen,
   PenTool,
   ClipboardList,
   Search,
-  Crown,
   ArrowRight,
   Lock,
 } from 'lucide-react';
@@ -47,16 +44,28 @@ const categoryConfig = {
 
 type CategoryType = 'explanation' | 'solution' | 'quizzes';
 
+interface PdfItem {
+  id: string;
+  title: string;
+  description: string;
+  fileUrl: string;
+  order: number;
+  category?: CategoryType | null;
+  accessType?: string | null;
+  locked?: boolean;
+}
+
 export default function PdfsPage() {
   const { user, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [allPdfs, setAllPdfs] = useState<any[]>([]);
+  const [allPdfs, setAllPdfs] = useState<PdfItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<CategoryType>('explanation');
 
   useEffect(() => {
     fetchPdfs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.grade]);
 
   const fetchPdfs = async () => {
@@ -75,16 +84,16 @@ export default function PdfsPage() {
   };
 
   const filteredPdfs = allPdfs
-    .filter((pdf: any) => {
+    .filter((pdf: PdfItem) => {
       const matchesSearch = 
         pdf.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pdf.description?.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = !activeCategory || pdf.category === activeCategory;
       return matchesSearch && matchesCategory;
     })
-    .sort((a: any, b: any) => (a.order || 0) - (b.order || 0));
+    .sort((a: PdfItem, b: PdfItem) => (a.order || 0) - (b.order || 0));
 
-  const categoryCounts = allPdfs.reduce((acc: any, pdf: any) => {
+  const categoryCounts = allPdfs.reduce((acc: Record<string, number>, pdf: PdfItem) => {
     const cat = pdf.category || 'explanation';
     acc[cat] = (acc[cat] || 0) + 1;
     return acc;
@@ -152,7 +161,7 @@ export default function PdfsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPdfs.map((pdf: any, index: number) => {
+            {filteredPdfs.map((pdf: PdfItem, index: number) => {
               const config = categoryConfig[pdf.category as CategoryType] || categoryConfig.explanation;
               const IconComponent = config.icon;
               const locked = !!pdf.locked;

@@ -48,7 +48,7 @@ export function CertificateView({
   qrDataUrl,
 }: CertificateViewProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(!qrDataUrl);
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -137,8 +137,6 @@ export function CertificateView({
       };
       img.onerror = () => setIsLoaded(true);
       img.src = qrDataUrl;
-    } else {
-      setIsLoaded(true);
     }
   }, [studentName, courseTitle, completionPercent, teacherName, certificateId, issuedAt, qrDataUrl]);
 

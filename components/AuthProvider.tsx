@@ -207,8 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const subscribe = async (
     plan: 'monthly' | 'yearly' | 'semester',
     paymentMethod: 'vodafone_cash',
-    classKey?: string,
-    _amount?: number
+    classKey?: string
   ) => {
     if (!user) return { success: false, error: 'يجب تسجيل الدخول أولاً' };
 
