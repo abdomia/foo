@@ -3,6 +3,24 @@ import { hashPassword } from '@/lib/password';
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
 
+// Fields the rest of the app needs for a User — never fetch the password hash
+// when only a SafeUser (session/profile) is required.
+const USER_SAFE_SELECT = {
+  id: true,
+  name: true,
+  email: true,
+  phone: true,
+  parentPhone: true,
+  avatar: true,
+  grade: true,
+  isSubscribed: true,
+  subscriptionPlan: true,
+  subscriptionExpiry: true,
+  isAdmin: true,
+  role: true,
+  createdAt: true,
+} as const;
+
 function toSafeUser(user: PrismaUser) {
   return {
     id: user.id,
@@ -41,9 +59,12 @@ if (process.env.NODE_ENV !== 'production') {
 export async function getUserById(id: string): Promise<any | null> {
   if (!id) return null;
   try {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: USER_SAFE_SELECT,
+    });
     if (!user) return null;
-    return toSafeUser(user);
+    return toSafeUser(user as PrismaUser);
   } catch (error) {
     console.error('Error getting user by id:', error);
     return null;
@@ -54,10 +75,11 @@ export async function getUserByEmail(email: string): Promise<any | null> {
   if (!email) return null;
   try {
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() }
+      where: { email: email.toLowerCase() },
+      select: USER_SAFE_SELECT,
     });
     if (!user) return null;
-    return toSafeUser(user);
+    return toSafeUser(user as PrismaUser);
   } catch (error) {
     console.error('Error getting user by email:', error);
     return null;

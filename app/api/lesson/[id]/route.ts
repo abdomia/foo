@@ -25,6 +25,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const [topicLessons, pdfs, quiz, progress] = await Promise.all([
       prisma.lesson.findMany({
         where: { topicId: lesson.topicId },
+        select: { id: true, title: true, order: true },
         orderBy: { order: 'asc' },
       }),
       prisma.pdf.findMany({
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       }),
       prisma.quiz.findFirst({
         where: { topicId: lesson.topicId },
-        include: { questions: { orderBy: { order: 'asc' } } },
+        include: { _count: { select: { questions: true } } },
         orderBy: { createdAt: 'asc' },
       }),
       prisma.userLessonProgress.findUnique({
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             title: quiz.title,
             description: quiz.description,
             locked: quizLocked,
-            questionsCount: quiz.questions.length,
+            questionsCount: quiz._count.questions,
             timeLimit: quiz.timeLimit,
             passingScore: quiz.passingScore,
           }

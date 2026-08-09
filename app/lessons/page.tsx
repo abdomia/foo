@@ -42,21 +42,26 @@ export default function LessonsPage() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
+  const activeTopicIdRef = useRef<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'explanations' | 'practices'>('explanations');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchTopics();
-  }, [user]);
-
-  useEffect(() => {
-    if (user) {
-      fetchTopics();
-    }
+    let cancelled = false;
+    fetchTopics().then((result) => {
+      if (cancelled) return;
+      setTopics(result);
+      setIsLoading(false);
+      if (activeTopicIdRef.current) setActiveTopicId(activeTopicIdRef.current);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
-  const fetchTopics = async () => {
+  const fetchTopics = async (): Promise<any[]> => {
     try {
       const gradeParam = user?.grade ? `?grade=${user.grade}` : '';
       const res = await fetch(`/api/admin/topics${gradeParam}`);
@@ -78,15 +83,15 @@ export default function LessonsPage() {
           }));
           return { ...topic, lessons: lessonsWithProgress };
         }));
-        setTopics(topicsWithProgress);
-        if (data.data.length > 0) {
-          setActiveTopicId(data.data[0].id);
+        if (data.data.length > 0 && !activeTopicIdRef.current) {
+          activeTopicIdRef.current = data.data[0].id;
         }
+        return topicsWithProgress;
       }
+      return [];
     } catch (error) {
       console.error('Failed to fetch topics:', error);
-    } finally {
-      setIsLoading(false);
+      return [];
     }
   };
 

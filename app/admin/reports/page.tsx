@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/components/AuthProvider';
@@ -146,8 +145,9 @@ export default function AdminReportsPage() {
     downloadBlob('\uFEFF' + [header, ...lines].join('\n'), `تقرير-${type}.csv`, 'text/csv;charset=utf-8;');
   };
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
     if (!data) return;
+    const XLSX = await import('xlsx');
     const worksheetData = data.rows.map((row) =>
       Object.fromEntries(data.columns.map((c) => [c.label, row[c.key] ?? '']))
     );

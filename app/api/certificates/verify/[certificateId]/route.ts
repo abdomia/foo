@@ -20,19 +20,24 @@ export async function GET(
 
     const verifyUrl = verificationUrl(origin, certificate.certificateId);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        certificateId: certificate.certificateId,
-        courseTitle: certificate.courseTitle,
-        completionPercent: certificate.completionPercent,
-        studentName: certificate.studentName,
-        teacherName: certificate.teacherName,
-        issuedAt: certificate.issuedAt.toISOString(),
-        verifyUrl,
-        qrDataUrl: await makeQrDataUrl(verifyUrl),
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          certificateId: certificate.certificateId,
+          courseTitle: certificate.courseTitle,
+          completionPercent: certificate.completionPercent,
+          studentName: certificate.studentName,
+          teacherName: certificate.teacherName,
+          issuedAt: certificate.issuedAt.toISOString(),
+          verifyUrl,
+          qrDataUrl: await makeQrDataUrl(verifyUrl),
+        },
       },
-    });
+      {
+        headers: { 'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600' },
+      }
+    );
   } catch (error) {
     console.error('Error verifying certificate:', error);
     return NextResponse.json({ success: false, error: 'Failed to verify certificate' }, { status: 500 });

@@ -84,7 +84,17 @@ export async function GET(request: NextRequest) {
       const [dbLessons, total] = await Promise.all([
         prisma.lesson.findMany({
           where,
-          include: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            summary: true,
+            keyPoints: true,
+            files: true,
+            grade: true,
+            accessType: true,
+            order: true,
+            topicId: true,
             topic: { select: { id: true, title: true, grade: true } },
           },
           orderBy: { order: 'asc' },
@@ -376,10 +386,15 @@ export async function GET(request: NextRequest) {
 
     const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
 
-    return NextResponse.json({
-      success: true,
-      data: { query: q, counts, results, total },
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        data: { query: q, counts, results, total },
+      },
+      {
+        headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=300' },
+      }
+    );
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json({ success: false, error: 'Failed to search' }, { status: 500 });

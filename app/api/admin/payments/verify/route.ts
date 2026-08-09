@@ -18,7 +18,6 @@ export async function POST(request: NextRequest) {
 
     const payment = await prisma.payment.findUnique({
       where: { id: paymentId },
-      include: { user: true },
     });
 
     if (!payment) {

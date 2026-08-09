@@ -18,12 +18,17 @@ import {
   ChevronDown, Phone, Mail, MessageCircle, FileText, ClipboardList,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/components/AuthProvider';
 import { CLASSES, getClassByKey, type ClassKey } from '@/lib/classes';
-import { ChatBot } from '@/components/chatbot/ChatBot';
 import { useTheme } from '@/components/ThemeProvider';
 import { cn } from '@/lib/utils';
 import platformHero from '@/public/platform-hero.png';
+
+const ChatBot = dynamic(() =>
+  import('@/components/chatbot/ChatBot').then((mod) => mod.ChatBot),
+  { ssr: false }
+);
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 

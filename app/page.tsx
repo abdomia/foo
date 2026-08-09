@@ -1,9 +1,13 @@
 'use client';
 
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/components/AuthProvider';
-import LandingPage from './landing/page';
-import Dashboard from './dashboard/page';
+
+// Guest homepage and student dashboard are heavy (gsap/framer-motion vs recharts).
+// Load only the page that actually renders so anonymous visitors never ship dashboard JS.
+const LandingPage = dynamic(() => import('./landing/page'), { ssr: false });
+const Dashboard = dynamic(() => import('./dashboard/page'), { ssr: false });
 
 export default function HomePage() {
   const { user, isLoading } = useAuth();

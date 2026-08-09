@@ -207,13 +207,16 @@ export default function QuizzesPage() {
     }
   };
 
+  const submitQuizRef = useRef<(() => void) | null>(null);
+  const timerRunning = timeLeft !== null && timeLeft > 0 && phase === 'in-progress';
+
   useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0 || phase !== 'in-progress') return;
+    if (!timerRunning) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev === null || prev <= 1) {
-          submitQuiz();
+          submitQuizRef.current?.();
           return 0;
         }
         return prev - 1;
@@ -221,8 +224,7 @@ export default function QuizzesPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft, phase]);
+  }, [timerRunning]);
 
   const selectAnswer = (questionId: string, answer: string) => {
     if (phase !== 'in-progress') return;
@@ -273,6 +275,8 @@ export default function QuizzesPage() {
     fetchUserResults();
     submittingRef.current = false;
   }, [answers, selectedQuiz]);
+
+  submitQuizRef.current = submitQuiz;
 
   const closeQuiz = () => {
     setSelectedQuiz(null);

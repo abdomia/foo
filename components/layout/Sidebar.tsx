@@ -94,12 +94,21 @@ export function Sidebar() {
     loadUnread();
     loadGamification();
     const interval = setInterval(() => {
+      if (document.hidden) return;
       loadUnread();
       loadGamification();
     }, 60000);
+    const onVisibility = () => {
+      if (!document.hidden) {
+        loadUnread();
+        loadGamification();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
     return () => {
       active = false;
       clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [user]);
 

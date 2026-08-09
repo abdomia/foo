@@ -41,7 +41,6 @@ import {
   LayoutDashboard,
   BarChart3,
 } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 
 interface Lesson {
@@ -213,7 +212,8 @@ export default function AdminPage() {
     }
   };
 
-  const exportUsersToExcel = () => {
+  const exportUsersToExcel = async () => {
+    const XLSX = await import('xlsx');
     const worksheetData = users.map((u: any) => ({
       'الاسم': u.name || '',
       'البريد الإلكتروني': u.email || '',

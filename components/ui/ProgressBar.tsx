@@ -1,6 +1,5 @@
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface ProgressBarProps {
   value: number;
@@ -51,16 +50,11 @@ export function ProgressBar({
           style={{ width: `${percentage}%` }}
         />
         {isComplete && (
-          <motion.div
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-          >
+          <div className="animate-pop-in absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2">
             <div className="w-5 h-5 bg-success rounded-full flex items-center justify-center shadow-lg">
               <Check className="w-3 h-3 text-white" />
             </div>
-          </motion.div>
+          </div>
         )}
       </div>
     </div>
