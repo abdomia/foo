@@ -145,6 +145,19 @@ export const adminPdfSchema = z.object({
   topicId: z.string().min(1).optional().nullable(),
 });
 
+export const generateFromSourceSchema = z.object({
+  sourceUrl: z.string().trim().min(1).max(1000),
+  sourceType: z.enum(['pdf', 'youtube']).optional(),
+  title: z.string().trim().min(1).max(200),
+  description: z.string().max(1000).optional().nullable(),
+  accessType: accessTypeSchema,
+  grade: z.string().trim().max(60).optional().nullable(),
+  topicId: z.string().min(1),
+  timeLimit: z.number().int().min(0).nullable().optional(),
+  passingScore: z.number().int().min(0).max(100).optional(),
+  questionCount: z.number().int().min(1).max(40).default(10),
+});
+
 export const questionBankSchema = z.object({
   question: z.string().trim().min(1).max(500),
   type: z.enum(['multiple-choice', 'true-false']).default('multiple-choice'),

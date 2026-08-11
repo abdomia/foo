@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Edit2, Trash2, X, Save, Database } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Save, Database, Sparkles } from 'lucide-react';
+import GenerateQuizFromSourceModal from '@/components/admin/GenerateQuizFromSourceModal';
 
 interface BankQuestion {
   id: string;
@@ -48,6 +49,7 @@ export default function QuestionBankSection({
   const [difficulty, setDifficulty] = useState('');
   const [topicFilter, setTopicFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showSourceModal, setShowSourceModal] = useState(false);
   const [editing, setEditing] = useState<BankQuestion | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -226,10 +228,21 @@ export default function QuestionBankSection({
           <Database className="w-5 h-5" />
           بنك الأسئلة
         </CardTitle>
-        <Button onClick={() => { resetForm(); setShowForm(true); }} size="sm" className="gap-2">
-          <Plus className="w-4 h-4" />
-          إضافة سؤال
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setShowSourceModal(true)}
+            size="sm"
+            variant="outline"
+            className="gap-2 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10"
+          >
+            <Sparkles className="w-4 h-4" />
+            توليد من رابط
+          </Button>
+          <Button onClick={() => { resetForm(); setShowForm(true); }} size="sm" className="gap-2">
+            <Plus className="w-4 h-4" />
+            إضافة سؤال
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3 md:grid-cols-3 mb-4">
@@ -515,6 +528,13 @@ export default function QuestionBankSection({
           </div>
         </div>
       )}
+
+      <GenerateQuizFromSourceModal
+        show={showSourceModal}
+        setShow={setShowSourceModal}
+        topics={topics}
+        onGenerated={fetchQuestions}
+      />
     </Card>
   );
 }
