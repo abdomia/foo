@@ -173,6 +173,36 @@ export const generateQuizSchema = z.object({
   }),
 });
 
+export const studyPlanCreateSchema = z
+  .object({
+    title: z.string().trim().max(120).optional().or(z.literal('')),
+    grade: classKeySchema,
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'تاريخ البداية غير صالح'),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'تاريخ النهاية غير صالح'),
+    dailyMinutes: z.number().int().min(10).max(600),
+    selectedDays: z.array(z.number().int().min(0).max(6)).min(1).max(7),
+    contentScope: z.enum(['full', 'units', 'lessons']),
+    contentType: z.enum(['explanation', 'practice', 'both', 'review']),
+    unitIds: z.array(z.string().min(1)).default([]),
+    lessonIds: z.array(z.string().min(1)).default([]),
+    difficultyLevel: z.enum(['weak', 'average', 'good', 'very_good', 'excellent']),
+    priorKnowledge: z.enum(['none', 'partial', 'review']),
+    studyIntensity: z.enum(['light', 'balanced', 'intensive']).default('balanced'),
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية أو مساوياً له',
+    path: ['endDate'],
+  });
+
+export const studyPlanUpdateSchema = z.object({
+  title: z.string().trim().max(120).optional().or(z.literal('')),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'تاريخ النهاية غير صالح').optional(),
+  dailyMinutes: z.number().int().min(10).max(600).optional(),
+  selectedDays: z.array(z.number().int().min(0).max(6)).min(1).max(7).optional(),
+  contentType: z.enum(['explanation', 'practice', 'both', 'review']).optional(),
+  studyIntensity: z.enum(['light', 'balanced', 'intensive']).optional(),
+});
+
 export const adminAdviceSchema = z.object({
   title: z.string().trim().min(1).max(200),
   content: z.string().trim().min(1).max(10000),

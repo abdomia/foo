@@ -8,7 +8,8 @@ export type NotificationType =
   | 'announcement'
   | 'subscription_expiring'
   | 'quiz_result'
-  | 'achievement';
+  | 'achievement'
+  | 'study_plan';
 
 export async function createNotification(input: {
   userId: string;

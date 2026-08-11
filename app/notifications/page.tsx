@@ -39,6 +39,7 @@ const TYPE_META: Record<string, { label: string; icon: typeof Bell }> = {
   subscription_expiring: { label: 'الاشتراك', icon: CreditCard },
   quiz_result: { label: 'نتائج', icon: Star },
   achievement: { label: 'إنجاز', icon: Trophy },
+  study_plan: { label: 'خطتي الذكية', icon: ClipboardList },
 };
 
 function formatRelative(dateStr: string): string {

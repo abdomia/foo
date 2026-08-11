@@ -10,6 +10,7 @@ import {
   touchStreak,
   XP,
 } from '@/lib/gamification';
+import { syncPlanAfterLessonCompleted } from '@/lib/study-plans/service';
 
 export async function POST(request: NextRequest) {
   const user = await getSessionUser();
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest) {
         });
         await checkUnitCompletion(user.id, lesson.topicId);
         await checkProgramCompletion(user.id);
+        await syncPlanAfterLessonCompleted(user.id, lessonId);
       }
 
       return NextResponse.json({ success: true, data: updated });
@@ -117,6 +119,7 @@ export async function POST(request: NextRequest) {
       });
       await checkUnitCompletion(user.id, lesson.topicId);
       await checkProgramCompletion(user.id);
+      await syncPlanAfterLessonCompleted(user.id, lessonId);
     }
 
     return NextResponse.json({ success: true, data: newProgress });

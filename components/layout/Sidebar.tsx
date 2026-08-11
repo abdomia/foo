@@ -30,6 +30,7 @@ import {
   Users,
   Activity,
   Smartphone,
+  Sparkles,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -46,6 +47,7 @@ const navItems = [
   { href: '/report', label: 'تقريري', icon: Activity },
   { href: '/devices', label: 'الأجهزة', icon: Smartphone },
   { href: '/path', label: 'خطتي', icon: Map },
+  { href: '/study-plans', label: '🤖 خطتي الذكية', icon: Sparkles },
   { href: '/progress', label: 'تطويري', icon: TrendingUp },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
 ];

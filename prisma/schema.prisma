@@ -43,6 +43,7 @@ model User {
   xpLogs             XpLog[]
   badges             Badge[]
   certificates       Certificate[]
+  studyPlans         StudyPlan[]
 
   @@index([role, createdAt])
   @@index([lastActiveDate])
@@ -169,27 +170,90 @@ model Topic {
 }
 
 model Lesson {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  videoUrl    String
-  duration    String
-  type        String   @default("explanation")
-  accessType  String   @default("FREE") // FREE | SUBSCRIBER | PREMIUM
-  summary     String?
-  keyPoints   Json?
-  files       Json?
-  grade       String?
-  order       Int      @default(0)
-  topicId   String
-  topic     Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  progress   UserLessonProgress[]
-  questions  Question[]
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  videoUrl     String
+  duration     String
+  type         String   @default("explanation")
+  accessType   String   @default("FREE") // FREE | SUBSCRIBER | PREMIUM
+  summary      String?
+  keyPoints    Json?
+  files        Json?
+  grade        String?
+  order        Int      @default(0)
+  difficulty   String   @default("medium") // easy | medium | hard
+  prerequisites String[] @default([]) // ordered lesson ids that should come first
+  topicId      String
+  topic        Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  progress     UserLessonProgress[]
+  questions    Question[]
+  studyPlanItems StudyPlanItem[]
 
   @@index([topicId, order])
   @@index([grade, order])
+  @@index([type, grade])
+}
+
+// 🤖 خطتي الذكية — AI Study Planner
+model StudyPlan {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title              String?          // optional plan title
+  grade              String           // classKey (e.g. third_preparatory)
+  startDate          DateTime
+  endDate            DateTime
+  dailyMinutes       Int              // minutes the student can study per day
+  selectedDays       Int[]            // JS Date.getDay() values (0=Sun .. 6=Sat)
+  contentScope       String           // full | units | lessons
+  contentType        String           // explanation | practice | both | review
+  selectedUnitIds    String[]         // topic ids (when scope = units | lessons)
+  selectedLessonIds  String[]         // lesson ids (when scope = lessons)
+  difficultyLevel    String           // weak | average | good | very_good | excellent
+  priorKnowledge     String           // none | partial | review
+  studyIntensity     String           // light | balanced | intensive
+  status             String           @default("active") // active | completed | archived
+  progressPercent    Int              @default(0)
+  totalVideos        Int              @default(0)
+  explanationVideos  Int              @default(0)
+  practiceVideos     Int              @default(0)
+  reviewVideos       Int              @default(0)
+  examVideos         Int              @default(0)
+  totalContentMinutes Int             @default(0)
+  aiUsed             Boolean          @default(false)
+  resetCount         Int              @default(0)
+  completedAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  items              StudyPlanItem[]
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([grade])
+}
+
+model StudyPlanItem {
+  id              String    @id @default(cuid())
+  planId          String
+  plan            StudyPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  lessonId        String
+  lesson          Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  scheduledDate   DateTime  // date-only (start of day)
+  orderIndex      Int
+  videoType       String    // explanation | practice | review | exam (snapshot)
+  durationMinutes Int       @default(0)
+  completed       Boolean   @default(false)
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  @@index([planId])
+  @@index([planId, scheduledDate])
+  @@index([planId, lessonId])
+  @@index([lessonId])
 }
 
 model Payment {
