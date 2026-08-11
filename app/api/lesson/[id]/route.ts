@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { getEffectiveAccessLevel, gateLesson, gatePdf } from '@/lib/content-access';
 import { canAccessContent } from '@/lib/subscription';
+import { normalizeKeyPoints, normalizeFiles } from '@/lib/lesson-normalize';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
@@ -63,8 +64,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         accessType: gated.accessType || 'FREE',
         locked: gated.locked ?? false,
         summary: gated.summary ?? null,
-        keyPoints: (gated.keyPoints as string[]) ?? [],
-        files: (gated.files as { title: string; url: string; type?: string }[]) ?? [],
+        keyPoints: normalizeKeyPoints(gated.keyPoints),
+        files: normalizeFiles(gated.files),
       },
       topic: {
         id: lesson.topicId,
