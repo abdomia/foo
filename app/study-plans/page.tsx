@@ -7,6 +7,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useAuth } from '@/components/AuthProvider';
+import { LearningPathSection } from '@/components/study-plans/LearningPathSection';
 import { Bot, Sparkles, Clock, CalendarRange, Trophy, History, Plus, ArrowLeft, RefreshCcw, CheckCircle2, Crown } from 'lucide-react';
 
 interface PlanSummary {
@@ -216,6 +217,14 @@ export default function StudyPlansPage() {
             </div>
           </div>
         )}
+
+        <div>
+          <h2 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-text-secondary" />
+            تقدمك في المنهج
+          </h2>
+          <LearningPathSection />
+        </div>
       </div>
     </MainLayout>
   );

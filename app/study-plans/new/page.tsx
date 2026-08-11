@@ -13,7 +13,6 @@ import {
   BookOpen,
   ListChecks,
   CalendarRange,
-  Gauge,
   Rocket,
   Play,
   FileText,
@@ -75,7 +74,7 @@ const LOADING_MESSAGES = [
   'خطوتك الأخيرة على وشك النهاية 🚀',
 ];
 
-const STEPS = ['الصف', 'المحتوى', 'نوع الفيديوهات', 'الجدول', 'مستواك', 'تأكيد'];
+const STEPS = ['المحتوى', 'نوع الفيديوهات', 'الجدول', 'مستواك', 'تأكيد'];
 
 export default function NewStudyPlanPage() {
   const router = useRouter();
@@ -111,13 +110,21 @@ export default function NewStudyPlanPage() {
       const json = await res.json();
       if (json.success) {
         setGrades(json.data.grades);
+        const studentGrade = json.data.grades.find((g: GradeMeta) => g.key === user?.grade);
         const firstWithContent = json.data.grades.find((g: GradeMeta) => g.hasContent);
-        if (firstWithContent) setGrade(firstWithContent.key);
+        if (studentGrade && studentGrade.hasContent) {
+          setGrade(studentGrade.key);
+        } else if (studentGrade && !studentGrade.hasContent) {
+          setGrade(studentGrade.key);
+          setError('لا يوجد محتوى متاح بعد لصفك الدراسي');
+        } else if (firstWithContent) {
+          setGrade(firstWithContent.key);
+        }
       }
     } catch (e) {
       console.error('Failed to load meta:', e);
     }
-  }, []);
+  }, [user?.grade]);
 
   useEffect(() => {
     loadMeta();
@@ -166,14 +173,13 @@ export default function NewStudyPlanPage() {
   const defaultEnd = new Date(today.getTime() + 30 * 86400000).toISOString().slice(0, 10);
 
   const canProceed = () => {
-    if (step === 0) return Boolean(grade);
-    if (step === 1) {
+    if (step === 0) {
       if (scope === 'units') return unitIds.length > 0;
       if (scope === 'lessons') return lessonIds.length > 0;
-      return true;
+      return Boolean(grade);
     }
-    if (step === 2) return true;
-    if (step === 3) {
+    if (step === 1) return true;
+    if (step === 2) {
       const s = startDate || defaultStart;
       const e = endDate || defaultEnd;
       return Boolean(s && e && e >= s && selectedDays.length > 0);
@@ -287,6 +293,12 @@ export default function NewStudyPlanPage() {
             أنشئ خطتك الذكية
           </h1>
           <p className="text-text-secondary mt-1">خطوات قليلة ونظبط لك جدول مذاكرة يوم بيوم 🤖</p>
+          {grade && (
+            <div className="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-bold">
+              <GraduationCap className="w-4 h-4" />
+              صفك: {grades.find((g) => g.key === grade)?.name ?? grade}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between px-1 py-3 overflow-x-auto">
@@ -295,43 +307,10 @@ export default function NewStudyPlanPage() {
 
         <Card>
           <CardContent className="p-6">
-            {/* STEP 0: grade */}
+            {/* STEP 0: content scope */}
             {step === 0 && (
-              <div className="space-y-4">
-                <h2 className="text-lg font-bold text-text-primary">اختار صفك الدراسي</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {grades.map((g) => (
-                    <button
-                      key={g.key}
-                      type="button"
-                      disabled={!g.hasContent}
-                      onClick={() => {
-                        setGrade(g.key);
-                        setError('');
-                      }}
-                      className={cn(
-                        'p-4 rounded-2xl border-2 text-right transition-all',
-                        grade === g.key
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/40',
-                        !g.hasContent && 'opacity-40 pointer-events-none'
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <GraduationCap className={cn('w-6 h-6', grade === g.key ? 'text-primary' : 'text-text-secondary')} />
-                        {g.hasContent && <span className="text-xs text-text-secondary">{g.lessonCount} درس</span>}
-                      </div>
-                      <p className="font-bold text-text-primary mt-2">{g.name}</p>
-                      {!g.hasContent && <p className="text-xs text-text-secondary mt-1">المحتوى قادم قريباً</p>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* STEP 1: content scope */}
-            {step === 1 && (
               <div className="space-y-5">
+                {error && <p className="text-sm text-error bg-error/10 rounded-xl p-3">{error}</p>}
                 <h2 className="text-lg font-bold text-text-primary">ايه اللي هتذاكره؟</h2>
                 <div className="grid grid-cols-3 gap-3">
                   <TypeOption
@@ -447,8 +426,8 @@ export default function NewStudyPlanPage() {
               </div>
             )}
 
-            {/* STEP 2: content type */}
-            {step === 2 && (
+            {/* STEP 1: content type */}
+            {step === 1 && (
               <div className="space-y-4">
                 <h2 className="text-lg font-bold text-text-primary">عايز تشوف فيديوهات إيه؟</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -492,8 +471,8 @@ export default function NewStudyPlanPage() {
               </div>
             )}
 
-            {/* STEP 3: dates + days + daily minutes */}
-            {step === 3 && (
+            {/* STEP 2: dates + days + daily minutes */}
+            {step === 2 && (
               <div className="space-y-5">
                 <h2 className="text-lg font-bold text-text-primary">امتى هتذاكر؟</h2>
                 <div className="grid grid-cols-2 gap-3">
@@ -563,8 +542,8 @@ export default function NewStudyPlanPage() {
               </div>
             )}
 
-            {/* STEP 4: level + knowledge + intensity */}
-            {step === 4 && (
+            {/* STEP 3: level + knowledge + intensity */}
+            {step === 3 && (
               <div className="space-y-5">
                 <h2 className="text-lg font-bold text-text-primary">قوّي الخطة شوية على مزاجك</h2>
 
@@ -638,8 +617,8 @@ export default function NewStudyPlanPage() {
               </div>
             )}
 
-            {/* STEP 5: review + create */}
-            {step === 5 && (
+            {/* STEP 4: review + create */}
+            {step === 4 && (
               <div className="space-y-4">
                 <h2 className="text-lg font-bold text-text-primary flex items-center gap-2">
                   <Rocket className="w-6 h-6 text-primary" />
@@ -697,7 +676,7 @@ export default function NewStudyPlanPage() {
               </div>
             )}
 
-            {step < 5 && (
+            {step < 4 && (
               <div className="flex justify-between mt-8 pt-4 border-t border-border">
                 <Button variant="outline" onClick={back} disabled={step === 0} className="gap-2">
                   <ArrowRight className="w-4 h-4" />
@@ -732,7 +711,7 @@ export default function NewStudyPlanPage() {
           details={insufficient}
           onClose={() => {
             setInsufficient(null);
-            setStep(3);
+            setStep(2);
           }}
         />
       </div>

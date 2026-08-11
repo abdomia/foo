@@ -22,7 +22,6 @@ import {
   User,
   FileText,
   Lightbulb,
-  Map,
   Star,
   Bell,
   Award,
@@ -42,8 +41,7 @@ const navItems = [
   { href: '/favorites', label: 'المفضلة', icon: Star },
   { href: '/certificates', label: 'شهاداتي', icon: Award },
   { href: '/report', label: 'تقريري', icon: Activity },
-  { href: '/path', label: 'خطتي', icon: Map },
-  { href: '/study-plans', label: '🤖 خطتي الذكية', icon: Sparkles },
+  { href: '/study-plans', label: 'خطتي الذكية', icon: Sparkles },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
 ];
 

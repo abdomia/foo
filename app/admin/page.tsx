@@ -1812,287 +1812,369 @@ const handleUpdatePdf = async () => {
 
       {showLessonForm && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>إضافة درس جديد</CardTitle>
+          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 flex flex-row items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-bold text-text-primary">إضافة درس جديد</h2>
               <Button variant="ghost" size="sm" onClick={() => setShowLessonForm(false)}>
                 <X className="w-4 h-4" />
               </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-6">
               <div>
-                <label className="text-sm font-medium mb-2 block">عنوان الدرس</label>
-                <Input
-                  value={lessonForm.title}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, title: e.target.value })
-                  }
-                  placeholder="مثال: المتوسط الحسابي - الأساسيات"
-                  className="bg-card border-border text-foreground"
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  المعلومات الأساسية
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <label className="text-sm font-medium mb-2 block">عنوان الدرس</label>
+                    <Input
+                      value={lessonForm.title}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, title: e.target.value })
+                      }
+                      placeholder="مثال: المتوسط الحسابي - الأساسيات"
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
+                    <select
+                      value={lessonForm.grade || ''}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, grade: e.target.value })
+                      }
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                    >
+                      <option value="">كل السنوات</option>
+                      <option value="third_preparatory">الصف الثالث الاعدادي</option>
+                      <option value="first_secondary">الصف الأول الثانوي</option>
+                      <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
+                      <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
+                      <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <label className="text-sm font-medium mb-2 block">الوصف</label>
+                    <Input
+                      value={lessonForm.description}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, description: e.target.value })
+                      }
+                      placeholder="وصف الدرس"
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-sm font-medium mb-2 block">الوصف</label>
-                <Input
-                  value={lessonForm.description}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, description: e.target.value })
-                  }
-                  placeholder="وصف الدرس"
-                  className="bg-card border-border text-foreground"
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                  محتوى الدرس
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <label className="text-sm font-medium mb-2 block">رابط الفيديو (YouTube)</label>
+                    <Input
+                      value={lessonForm.videoUrl}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, videoUrl: e.target.value })
+                      }
+                      placeholder="https://www.youtube.com/embed/..."
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">المدة</label>
+                    <Input
+                      value={lessonForm.duration}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, duration: e.target.value })
+                      }
+                      placeholder="12:30"
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">النوع</label>
+                    <select
+                      value={lessonForm.type}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, type: e.target.value })
+                      }
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                    >
+                      <option value="explanation">شرح (فيديو تعليمي)</option>
+                      <option value="practice">تمرين (حل أسئلة)</option>
+                    </select>
+                  </div>
+                  <div className="lg:col-span-2">
+                    <AccessTypeSelect
+                      value={lessonForm.accessType}
+                      onChange={(v) => setLessonForm({ ...lessonForm, accessType: v })}
+                    />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-sm font-medium mb-2 block">رابط الفيديو (YouTube)</label>
-                <Input
-                  value={lessonForm.videoUrl}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, videoUrl: e.target.value })
-                  }
-                  placeholder="https://www.youtube.com/embed/..."
-                  className="bg-card border-border text-foreground"
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                  المحتوى الإضافي
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">ملخص الدرس (اختياري)</label>
+                    <textarea
+                      value={lessonForm.summary}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, summary: e.target.value })
+                      }
+                      placeholder="ملخص قصير يظهر بعد الفيديو"
+                      rows={3}
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground resize-y"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">نقاط مهمة (سطر لكل نقطة)</label>
+                    <textarea
+                      value={lessonForm.keyPoints}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, keyPoints: e.target.value })
+                      }
+                      placeholder={'المتوسط الحسابي = مجموع القيم ÷ عددها\nالترتيب مهم عند إيجاد الوسيط'}
+                      rows={3}
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground resize-y"
+                    />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-sm font-medium mb-2 block">المدة</label>
-                <Input
-                  value={lessonForm.duration}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, duration: e.target.value })
-                  }
-                  placeholder="12:30"
-                  className="bg-card border-border text-foreground"
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                  الملفات والإعدادات
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      ملفات الدرس (سطر لكل ملف: العنوان | الرابط)
+                    </label>
+                    <textarea
+                      value={lessonForm.files}
+                      onChange={(e) =>
+                        setLessonForm({ ...lessonForm, files: e.target.value })
+                      }
+                      placeholder={'ورقة العمل | https://example.com/work.pdf'}
+                      rows={2}
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground resize-y"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">النوع</label>
-                <select
-                  value={lessonForm.type}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, type: e.target.value })
-                  }
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                >
-                  <option value="explanation">شرح (فيديو تعليمي)</option>
-                  <option value="practice">تمرين (حل أسئلة)</option>
-                </select>
-              </div>
-              <AccessTypeSelect
-                value={lessonForm.accessType}
-                onChange={(v) => setLessonForm({ ...lessonForm, accessType: v })}
-              />
-              <div>
-                <label className="text-sm font-medium mb-2 block">ملخص الدرس (اختياري)</label>
-                <textarea
-                  value={lessonForm.summary}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, summary: e.target.value })
-                  }
-                  placeholder="ملخص قصير يظهر بعد الفيديو"
-                  rows={3}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">نقاط مهمة (سطر لكل نقطة)</label>
-                <textarea
-                  value={lessonForm.keyPoints}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, keyPoints: e.target.value })
-                  }
-                  placeholder={'المتوسط الحسابي = مجموع القيم ÷ عددها\nالترتيب مهم عند إيجاد الوسيط'}
-                  rows={3}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  ملفات الدرس (سطر لكل ملف: العنوان | الرابط)
-                </label>
-                <textarea
-                  value={lessonForm.files}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, files: e.target.value })
-                  }
-                  placeholder={'ورقة العمل | https://example.com/work.pdf'}
-                  rows={2}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
-                <select
-                  value={lessonForm.grade || ''}
-                  onChange={(e) =>
-                    setLessonForm({ ...lessonForm, grade: e.target.value })
-                  }
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                >
-                  <option value="">كل السنوات</option>
-                  <option value="third_preparatory">الصف الثالث الاعدادي</option>
-                  <option value="first_secondary">الصف الأول الثانوي</option>
-                  <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
-                  <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
-                  <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowLessonForm(false)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-                <Button onClick={handleCreateLesson} className="flex-1 gap-2">
-                  <Check className="w-4 h-4" />
-                  حفظ
-                </Button>
-              </div>
-            </CardContent>
+            </div>
+
+            <div className="flex-shrink-0 flex flex-col-reverse sm:flex-row gap-2 px-6 py-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => setShowLessonForm(false)}
+                className="flex-1"
+              >
+                إلغاء
+              </Button>
+              <Button onClick={handleCreateLesson} className="flex-1 gap-2">
+                <Check className="w-4 h-4" />
+                حفظ الدرس
+              </Button>
+            </div>
           </Card>
         </div>
       )}
 
       {editingLesson && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>تعديل الدرس</CardTitle>
+          <Card className="w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="flex-shrink-0 flex flex-row items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-bold text-text-primary">تعديل الدرس</h2>
               <Button variant="ghost" size="sm" onClick={() => setEditingLesson(null)}>
                 <X className="w-4 h-4" />
               </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            </div>
+
+            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 space-y-6">
               <div>
-                <label className="text-sm font-medium mb-2 block">عنوان الدرس</label>
-                <Input
-                  value={editingLesson.title}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, title: e.target.value })
-                  }
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  المعلومات الأساسية
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <label className="text-sm font-medium mb-2 block">عنوان الدرس</label>
+                    <Input
+                      value={editingLesson.title}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, title: e.target.value })
+                      }
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
+                    <select
+                      value={editingLesson.grade || ''}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, grade: e.target.value || null })
+                      }
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                    >
+                      <option value="">كل السنوات</option>
+                      <option value="third_preparatory">الصف الثالث الاعدادي</option>
+                      <option value="first_secondary">الصف الأول الثانوي</option>
+                      <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
+                      <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
+                      <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 lg:col-span-3">
+                    <label className="text-sm font-medium mb-2 block">الوصف</label>
+                    <Input
+                      value={editingLesson.description}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, description: e.target.value })
+                      }
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-sm font-medium mb-2 block">الوصف</label>
-                <Input
-                  value={editingLesson.description}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, description: e.target.value })
-                  }
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                  محتوى الدرس
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="lg:col-span-2">
+                    <label className="text-sm font-medium mb-2 block">رابط الفيديو</label>
+                    <Input
+                      value={editingLesson.videoUrl}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, videoUrl: e.target.value })
+                      }
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">المدة</label>
+                    <Input
+                      value={editingLesson.duration}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, duration: e.target.value })
+                      }
+                      className="bg-card border-border text-foreground"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">النوع</label>
+                    <select
+                      value={editingLesson.type || 'explanation'}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, type: e.target.value })
+                      }
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
+                    >
+                      <option value="explanation">شرح (فيديو تعليمي)</option>
+                      <option value="practice">تمرين (حل أسئلة)</option>
+                    </select>
+                  </div>
+                  <div className="lg:col-span-2">
+                    <AccessTypeSelect
+                      value={editingLesson.accessType || 'FREE'}
+                      onChange={(v) => setEditingLesson({ ...editingLesson, accessType: v })}
+                    />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-sm font-medium mb-2 block">رابط الفيديو</label>
-                <Input
-                  value={editingLesson.videoUrl}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, videoUrl: e.target.value })
-                  }
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                  المحتوى الإضافي
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">ملخص الدرس (اختياري)</label>
+                    <textarea
+                      value={editingLesson.summary || ''}
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, summary: e.target.value })
+                      }
+                      rows={3}
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground resize-y"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">نقاط مهمة (سطر لكل نقطة)</label>
+                    <textarea
+                      value={
+                        Array.isArray(editingLesson.keyPoints)
+                          ? editingLesson.keyPoints.join('\n')
+                          : editingLesson.keyPoints || ''
+                      }
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, keyPoints: e.target.value })
+                      }
+                      rows={3}
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground resize-y"
+                    />
+                  </div>
+                </div>
               </div>
+
               <div>
-                <label className="text-sm font-medium mb-2 block">المدة</label>
-                <Input
-                  value={editingLesson.duration}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, duration: e.target.value })
-                  }
-                />
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary mb-3">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                  الملفات والإعدادات
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      ملفات الدرس (سطر لكل ملف: العنوان | الرابط)
+                    </label>
+                    <textarea
+                      value={
+                        Array.isArray(editingLesson.files)
+                          ? editingLesson.files
+                              .map((f: { title: string; url: string }) => `${f.title} | ${f.url}`)
+                              .join('\n')
+                          : editingLesson.files || ''
+                      }
+                      onChange={(e) =>
+                        setEditingLesson({ ...editingLesson, files: e.target.value })
+                      }
+                      rows={2}
+                      className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground resize-y"
+                    />
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">النوع</label>
-                <select
-                  value={editingLesson.type || 'explanation'}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, type: e.target.value })
-                  }
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                >
-                  <option value="explanation">شرح (فيديو تعليمي)</option>
-                  <option value="practice">تمرين (حل أسئلة)</option>
-                </select>
-              </div>
-              <AccessTypeSelect
-                value={editingLesson.accessType || 'FREE'}
-                onChange={(v) => setEditingLesson({ ...editingLesson, accessType: v })}
-              />
-              <div>
-                <label className="text-sm font-medium mb-2 block">ملخص الدرس (اختياري)</label>
-                <textarea
-                  value={editingLesson.summary || ''}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, summary: e.target.value })
-                  }
-                  rows={3}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">نقاط مهمة (سطر لكل نقطة)</label>
-                <textarea
-                  value={
-                    Array.isArray(editingLesson.keyPoints)
-                      ? editingLesson.keyPoints.join('\n')
-                      : editingLesson.keyPoints || ''
-                  }
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, keyPoints: e.target.value })
-                  }
-                  rows={3}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  ملفات الدرس (سطر لكل ملف: العنوان | الرابط)
-                </label>
-                <textarea
-                  value={
-                    Array.isArray(editingLesson.files)
-                      ? editingLesson.files
-                          .map((f: { title: string; url: string }) => `${f.title} | ${f.url}`)
-                          .join('\n')
-                      : editingLesson.files || ''
-                  }
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, files: e.target.value })
-                  }
-                  rows={2}
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
-                <select
-                  value={editingLesson.grade || ''}
-                  onChange={(e) =>
-                    setEditingLesson({ ...editingLesson, grade: e.target.value || null })
-                  }
-                  className="w-full px-4 py-2 bg-card border border-border rounded-lg text-foreground"
-                >
-                  <option value="">كل السنوات</option>
-                  <option value="third_preparatory">الصف الثالث الاعدادي</option>
-                  <option value="first_secondary">الصف الأول الثانوي</option>
-                  <option value="second_secondary">الصف الثاني الثانوي (بكالوريا)</option>
-                  <option value="third_secondary_math">الصف الثالث الثانوي (علمي رياضة)</option>
-                  <option value="third_secondary_literary">الصف الثالث الثانوي (الشعبة الادبية)</option>
-                </select>
-              </div>
-              <div className="flex gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditingLesson(null)}
-                  className="flex-1"
-                >
-                  إلغاء
-                </Button>
-                <Button onClick={handleUpdateLesson} className="flex-1 gap-2">
-                  <Save className="w-4 h-4" />
-                  حفظ التغييرات
-                </Button>
-              </div>
-            </CardContent>
+            </div>
+
+            <div className="flex-shrink-0 flex flex-col-reverse sm:flex-row gap-2 px-6 py-4 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={() => setEditingLesson(null)}
+                className="flex-1"
+              >
+                إلغاء
+              </Button>
+              <Button onClick={handleUpdateLesson} className="flex-1 gap-2">
+                <Save className="w-4 h-4" />
+                حفظ الدرس
+              </Button>
+            </div>
           </Card>
         </div>
       )}
