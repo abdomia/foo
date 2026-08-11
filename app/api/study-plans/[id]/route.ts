@@ -16,14 +16,16 @@ function handlePlanError(error: unknown) {
   return NextResponse.json({ success: false, error: 'حدث خطأ غير متوقع' }, { status: 500 });
 }
 
-type Params = { params: { id: string } };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_request: NextRequest, { params }: Params) {
   const user = await getSessionUser();
   if (!user) return unauthorized();
 
+  const { id } = await params;
+
   try {
-    const data = await getStudyPlanForUser(params.id, user.id);
+    const data = await getStudyPlanForUser(id, user.id);
     if (!data) return NextResponse.json({ success: false, error: 'الخطة غير موجودة' }, { status: 404 });
     return NextResponse.json({ success: true, data });
   } catch (error) {
@@ -34,6 +36,8 @@ export async function GET(_request: NextRequest, { params }: Params) {
 export async function PATCH(request: NextRequest, { params }: Params) {
   const user = await getSessionUser();
   if (!user) return unauthorized();
+
+  const { id } = await params;
 
   let body: unknown;
   try {
@@ -51,8 +55,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   try {
-    const result = await updateStudyPlanSettings(params.id, user.id, parsed.data);
-    const data = await getStudyPlanForUser(params.id, user.id);
+    const result = await updateStudyPlanSettings(id, user.id, parsed.data);
+    const data = await getStudyPlanForUser(id, user.id);
     return NextResponse.json({ success: true, data, redistributedCount: result.redistributedCount });
   } catch (error) {
     return handlePlanError(error);

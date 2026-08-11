@@ -8,6 +8,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/components/AuthProvider';
+import { DevicesSection } from '@/components/profile/DevicesSection';
 import { getClassByKey } from '@/lib/classes';
 import {
   User,
@@ -159,10 +160,10 @@ export default function ProfilePage() {
             <h1 className="text-3xl font-bold text-text-primary">الملف الشخصي</h1>
             <p className="text-text-secondary mt-1">معلوماتك وإحصائيات تقدمك في المنصة</p>
           </div>
-          <Link href="/progress">
+          <Link href="/">
             <Badge variant="outline" className="gap-1 px-3 py-1.5">
               <Settings className="w-4 h-4" />
-              إعدادات وإحصائيات
+              تطويري
             </Badge>
           </Link>
         </div>
@@ -267,6 +268,8 @@ export default function ProfilePage() {
             })}
           </div>
         </div>
+
+        <DevicesSection />
       </div>
     </MainLayout>
   );

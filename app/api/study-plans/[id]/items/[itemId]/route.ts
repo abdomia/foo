@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser, unauthorized } from '@/lib/auth';
 import { markStudyPlanItem, StudyPlanError } from '@/lib/study-plans/service';
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string; itemId: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string; itemId: string }> }) {
   const user = await getSessionUser();
   if (!user) return unauthorized();
+
+  const { id, itemId } = await params;
 
   let body: { completed?: boolean } = {};
   try {
@@ -14,7 +16,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
   }
 
   try {
-    const item = await markStudyPlanItem(params.id, user.id, params.itemId, body.completed ?? true);
+    const item = await markStudyPlanItem(id, user.id, itemId, body.completed ?? true);
     return NextResponse.json({ success: true, data: item });
   } catch (error) {
     if (error instanceof StudyPlanError) {

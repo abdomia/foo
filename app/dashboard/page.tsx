@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useAuth } from '@/components/AuthProvider';
+import { ProgressContent } from '@/components/progress/ProgressContent';
 import { getClassByKey } from '@/lib/classes';
 import { formatMinutes } from '@/lib/learning';
 import Image from 'next/image';
@@ -31,7 +32,6 @@ import {
   GraduationCap,
   Zap,
   ListChecks,
-  ChevronLeft,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -393,10 +393,6 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-bold text-text-primary">الإنجازات</h3>
-                <Link href="/progress" className="text-sm text-primary hover:underline flex items-center gap-1">
-                  تطويري
-                  <ChevronLeft className="w-4 h-4" />
-                </Link>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {(stats?.badges ?? []).map((badge) => {
@@ -467,6 +463,8 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        <ProgressContent />
 
         <TooltipProvider>
           <Tooltip>

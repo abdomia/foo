@@ -5,11 +5,13 @@ import { getClassByKey } from '@/lib/classes';
 import { formatArabicDate, parseDateKey } from '@/lib/study-plans/planning';
 import { INTENSITY_LABELS, CONTENT_TYPE_LABELS, VIDEO_TYPE_LABELS, type VideoType } from '@/lib/study-plans/types';
 
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSessionUser();
   if (!user) return unauthorized();
 
-  const data = await getStudyPlanForUser(params.id, user.id);
+  const { id } = await params;
+
+  const data = await getStudyPlanForUser(id, user.id);
   if (!data) return NextResponse.json({ success: false, error: 'الخطة غير موجودة' }, { status: 404 });
 
   const { plan, stats, days } = data;

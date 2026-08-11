@@ -23,13 +23,11 @@ import {
   FileText,
   Lightbulb,
   Map,
-  Search,
   Star,
   Bell,
   Award,
   Users,
   Activity,
-  Smartphone,
   Sparkles,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -41,14 +39,11 @@ const navItems = [
   { href: '/lessons', label: 'الدروس', icon: BookOpen },
   { href: '/pdfs', label: 'PDFs', icon: FileText },
   { href: '/quizzes', label: 'الاختبارات', icon: ClipboardList },
-  { href: '/search', label: 'البحث', icon: Search },
   { href: '/favorites', label: 'المفضلة', icon: Star },
   { href: '/certificates', label: 'شهاداتي', icon: Award },
   { href: '/report', label: 'تقريري', icon: Activity },
-  { href: '/devices', label: 'الأجهزة', icon: Smartphone },
   { href: '/path', label: 'خطتي', icon: Map },
   { href: '/study-plans', label: '🤖 خطتي الذكية', icon: Sparkles },
-  { href: '/progress', label: 'تطويري', icon: TrendingUp },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
 ];
 
@@ -328,15 +323,15 @@ export function Sidebar() {
                       <span className="text-sm">الملف الشخصي</span>
                     </Link>
                     <Link
-                      href="/progress"
+                      href="/"
                       onClick={() => {
                         setShowUserMenu(false);
                         setIsOpen(false);
                       }}
                       className="flex items-center gap-2 px-4 py-3 text-text-secondary hover:bg-muted transition-colors"
                     >
-                      <Settings className="w-4 h-4" />
-                      <span className="text-sm">الإعدادات</span>
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-sm">تطويري</span>
                     </Link>
                     <button
                       onClick={handleLogout}

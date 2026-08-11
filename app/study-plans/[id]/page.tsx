@@ -12,7 +12,7 @@ import { VideoTypeBadge } from '@/components/study-plans/VideoTypeBadge';
 import { ConfirmDialog } from '@/components/study-plans/ConfirmDialog';
 import { EditPlanModal } from '@/components/study-plans/EditPlanModal';
 import {
-  Robot,
+  Bot,
   CalendarRange,
   Clock,
   Play,
@@ -35,6 +35,8 @@ import {
   PRIOR_KNOWLEDGE_LABELS,
   type ContentType,
   type StudyIntensity,
+  type DifficultyLevel,
+  type PriorKnowledge,
 } from '@/lib/study-plans/types';
 
 interface PlanItem {
@@ -100,11 +102,12 @@ interface PlanData {
   days: PlanDay[];
 }
 
-export default function StudyPlanDetailPage({ params }: { params: { id: string } }) {
+export default function StudyPlanDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isLoading } = useAuth();
 
+  const [planId, setPlanId] = useState('');
   const [data, setData] = useState<PlanData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -114,9 +117,13 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
   const [actionLoading, setActionLoading] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
+  useEffect(() => {
+    params.then((p) => setPlanId(p.id));
+  }, [params]);
+
   const fetchPlan = useCallback(async () => {
     try {
-      const res = await fetch(`/api/study-plans/${params.id}`, { cache: 'no-store' });
+      const res = await fetch(`/api/study-plans/${planId}`, { cache: 'no-store' });
       const json = await res.json();
       if (json.success) setData(json.data);
       else setError(json.error || 'فشل تحميل الخطة');
@@ -125,11 +132,11 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [planId]);
 
   useEffect(() => {
-    fetchPlan();
-  }, [fetchPlan]);
+    if (planId) fetchPlan();
+  }, [fetchPlan, planId]);
 
   useEffect(() => {
     if (!isLoading && !user) router.push('/auth/login');
@@ -142,7 +149,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
   const toggleItem = async (item: PlanItem) => {
     setToggling(item.id);
     try {
-      await fetch(`/api/study-plans/${params.id}/items/${item.id}`, {
+      await fetch(`/api/study-plans/${planId}/items/${item.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ completed: !item.completed }),
@@ -158,7 +165,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
   const handleReset = async () => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/study-plans/${params.id}/reset`, { method: 'POST' });
+      const res = await fetch(`/api/study-plans/${planId}/reset`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
         setShowReset(false);
@@ -176,7 +183,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
   const handleRegenerate = async () => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/study-plans/${params.id}/regenerate`, { method: 'POST' });
+      const res = await fetch(`/api/study-plans/${planId}/regenerate`, { method: 'POST' });
       const json = await res.json();
       if (json.success) {
         setShowRegenerate(false);
@@ -201,7 +208,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
     contentType: ContentType;
     studyIntensity: StudyIntensity;
   }) => {
-    const res = await fetch(`/api/study-plans/${params.id}`, {
+    const res = await fetch(`/api/study-plans/${planId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(changes),
@@ -294,7 +301,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
               disabled={isCompleted}
               className="h-10 px-4 rounded-xl border border-border text-text-primary font-bold text-sm hover:bg-muted transition-colors flex items-center gap-1.5 disabled:opacity-40"
             >
-              <Robot className="w-4 h-4" />
+              <Bot className="w-4 h-4" />
               إعادة إنشاء
             </button>
             <button
@@ -348,7 +355,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
                 </div>
                 <div className="bg-surface-card border border-border rounded-xl p-3 flex-1">
                   <p className="text-xs text-text-secondary">مستواك</p>
-                  <p className="font-bold text-text-primary text-sm">{DIFFICULTY_LABELS[plan.difficultyLevel] ?? plan.difficultyLevel}</p>
+                  <p className="font-bold text-text-primary text-sm">{DIFFICULTY_LABELS[plan.difficultyLevel as DifficultyLevel] ?? plan.difficultyLevel}</p>
                 </div>
               </div>
             </div>
@@ -356,7 +363,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
             <div className="flex flex-wrap gap-2 mt-4">
               {plan.aiUsed && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-xs font-bold">
-                  <Robot className="w-3.5 h-3.5" />
+                  <Bot className="w-3.5 h-3.5" />
                   مرتبة بالذكاء الاصطناعي
                 </span>
               )}
@@ -367,7 +374,7 @@ export default function StudyPlanDetailPage({ params }: { params: { id: string }
                 </span>
               )}
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted text-text-secondary text-xs font-bold">
-                {PRIOR_KNOWLEDGE_LABELS[plan.priorKnowledge] ?? plan.priorKnowledge}
+                {PRIOR_KNOWLEDGE_LABELS[plan.priorKnowledge as PriorKnowledge] ?? plan.priorKnowledge}
               </span>
               {isCompleted && (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success/10 text-success text-xs font-bold">

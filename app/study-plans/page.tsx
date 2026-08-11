@@ -7,7 +7,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useAuth } from '@/components/AuthProvider';
-import { Robot, Sparkles, Clock, CalendarRange, Trophy, History, Plus, ArrowLeft, RefreshCcw, CheckCircle2, Crown } from 'lucide-react';
+import { Bot, Sparkles, Clock, CalendarRange, Trophy, History, Plus, ArrowLeft, RefreshCcw, CheckCircle2, Crown } from 'lucide-react';
 
 interface PlanSummary {
   id: string;
@@ -87,7 +87,7 @@ export default function StudyPlansPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary flex items-center gap-2">
-              <Robot className="w-8 h-8 text-primary" />
+              <Bot className="w-8 h-8 text-primary" />
               خطتي الذكية
             </h1>
             <p className="text-text-secondary mt-1">خطة مذاكرة مخصصة تحسب لك ما تذاكره كل يوم بناءً على مناهجك</p>
@@ -130,7 +130,7 @@ export default function StudyPlansPage() {
                 </div>
                 {active.aiUsed && (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-bold">
-                    <Robot className="w-4 h-4" />
+                    <Bot className="w-4 h-4" />
                     مرتبة بالذكاء الاصطناعي
                   </div>
                 )}
