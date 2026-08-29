@@ -22,6 +22,15 @@ type LessonItem = (Lesson | Exercise) & {
   accessType?: string;
 };
 
+type LessonTab = 'explanations' | 'practices' | 'audio';
+
+const tabMatches = (lesson: Lesson, tab: LessonTab): boolean =>
+  tab === 'practices'
+    ? lesson.type === 'practice'
+    : tab === 'audio'
+      ? lesson.type === 'audio_summary'
+      : !lesson.type || lesson.type === 'explanation';
+
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   TrendingUp,
@@ -52,7 +61,7 @@ export default function LessonsPage() {
   const [activeTopicId, setActiveTopicId] = useState<string | null>(null);
   const activeTopicIdRef = useRef<string | null>(null);
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'explanations' | 'practices'>('explanations');
+  const [activeTab, setActiveTab] = useState<LessonTab>('explanations');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -115,15 +124,22 @@ export default function LessonsPage() {
 
   const isLessonLocked = (item: LessonItem) => 'locked' in item && !!item.locked;
 
+  const isOpenLesson = (item: LessonItem) => !item.type || item.type === 'audio_summary';
+
   // For practices tab, show practice-specific lessons or exercises
     // For explanations tab, show only explanation lessons
     // For practices tab, show practice lessons AND exercises
+    // For audio tab, show audio summary lessons
     const explanationLessons = currentTopic?.lessons?.filter(
-        (lesson: Lesson) => !lesson.type || lesson.type === 'explanation'
+        (lesson: Lesson) => tabMatches(lesson, 'explanations')
     ) || [];
 
     const practiceLessons = currentTopic?.lessons?.filter(
         (lesson: Lesson) => lesson.type === 'practice'
+    ) || [];
+
+    const audioLessons = currentTopic?.lessons?.filter(
+        (lesson: Lesson) => lesson.type === 'audio_summary'
     ) || [];
 
     const practiceExercises = getExercisesByTopic(currentTopic?.id || '');
@@ -131,7 +147,9 @@ export default function LessonsPage() {
     // For practices tab, combine practice lessons and exercises
     const practiceItems = activeTab === 'practices'
         ? [...practiceLessons, ...practiceExercises]
-        : explanationLessons;
+        : activeTab === 'audio'
+          ? audioLessons
+          : explanationLessons;
 
     const handleLessonClick = (item: LessonItem) => {
         if (!user) {
@@ -217,6 +235,18 @@ if (isLessonLocked(item)) {
             >
               التمارين
             </button>
+            <button
+              onClick={() => {
+                setActiveTab('audio');
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                activeTab === 'audio'
+                  ? 'bg-primary text-white shadow-md'
+                  : 'text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              ملخص صوتى
+            </button>
           </div>
         </div>
 
@@ -278,8 +308,7 @@ if (isLessonLocked(item)) {
                         </div>
                       </div>
                       <Badge variant="secondary">{(() => {
-                      const isPractice = activeTab === 'practices';
-                      const items = currentTopic.lessons?.filter((l: Lesson) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
+                      const items = currentTopic.lessons?.filter((l: Lesson) => tabMatches(l, activeTab)) || [];
                       const c = items.filter((l: Lesson) => l.completed).length;
                       const t = items.length || 1;
                       return Math.round((c/t)*100);
@@ -287,16 +316,14 @@ if (isLessonLocked(item)) {
                     </div>
                     <ProgressBar
                       value={(() => {
-                        const isPractice = activeTab === 'practices';
-                        const items = currentTopic.lessons?.filter((l: Lesson) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
+                        const items = currentTopic.lessons?.filter((l: Lesson) => tabMatches(l, activeTab)) || [];
                         const c = items.filter((l: Lesson) => l.completed).length;
                         const t = items.length || 1;
                         return Math.round((c/t)*100);
                       })()}
                       size="sm"
                       color={(() => {
-                        const isPractice = activeTab === 'practices';
-                        const items = currentTopic.lessons?.filter((l: Lesson) => isPractice ? l.type === 'practice' : !l.type || l.type === 'explanation') || [];
+                        const items = currentTopic.lessons?.filter((l: Lesson) => tabMatches(l, activeTab)) || [];
                         const c = items.filter((l: Lesson) => l.completed).length;
                         const t = items.length || 1;
                         return Math.round((c/t)*100) >= 100 ? 'success' : 'primary';
@@ -316,25 +343,25 @@ if (isLessonLocked(item)) {
                      >
                        <CardContent className="p-4">
                          <div className="flex items-center gap-4">
-                           <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
-                             item.completed
-                               ? 'bg-success/10 text-success'
-                               : !isLessonLocked(item) && !item.type
-                                 ? 'bg-primary/10 text-primary'
-                                 : 'bg-muted text-text-secondary'
-                           }`}>
-                             {item.completed ? (
-                               <CheckCircle2 className="w-6 h-6" />
-                             ) : !isLessonLocked(item) && !item.type ? (
-                               <span>{index + 1}</span>
-                             ) : (
-                               <Lock className="w-6 h-6" />
-                             )}
-                           </div>
-                           <div className="flex-1 min-w-0">
-                             <div className="flex items-center gap-2">
-                               <h3 className="font-bold text-text-primary mb-1">{item.title}</h3>
-                                {isLessonLocked(item) && !item.type && (
+<div className={`w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold ${
+                              item.completed
+                                ? 'bg-success/10 text-success'
+                                : !isLessonLocked(item) && isOpenLesson(item)
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'bg-muted text-text-secondary'
+                            }`}>
+                              {item.completed ? (
+                                <CheckCircle2 className="w-6 h-6" />
+                              ) : !isLessonLocked(item) && isOpenLesson(item) ? (
+                                <span>{index + 1}</span>
+                              ) : (
+                                <Lock className="w-6 h-6" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-bold text-text-primary mb-1">{item.title}</h3>
+                                 {isLessonLocked(item) && isOpenLesson(item) && (
                                   <Badge variant="secondary" className="gap-1">
                                     <Crown className="w-3 h-3" />
                                     {item.accessType === 'PREMIUM' ? 'للمشتركين المميزين' : 'للمشتركين'}
@@ -349,11 +376,11 @@ if (isLessonLocked(item)) {
                                </span>
                              </div>
                            </div>
-                           {!item.type && (
-                             <Button variant="ghost" size="sm">
-                               <Play className="w-4 h-4" />
-                             </Button>
-                           )}
+{isOpenLesson(item) && (
+                              <Button variant="ghost" size="sm">
+                                <Play className="w-4 h-4" />
+                              </Button>
+                            )}
                          </div>
                        </CardContent>
                      </Card>

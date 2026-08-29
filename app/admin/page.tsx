@@ -1876,13 +1876,21 @@ const handleUpdatePdf = async () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2">
-                    <label className="text-sm font-medium mb-2 block">رابط الفيديو (YouTube)</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      {lessonForm.type === 'audio_summary'
+                        ? 'رابط التسجيل الصوتي (MP3)'
+                        : 'رابط الفيديو (YouTube)'}
+                    </label>
                     <Input
                       value={lessonForm.videoUrl}
                       onChange={(e) =>
                         setLessonForm({ ...lessonForm, videoUrl: e.target.value })
                       }
-                      placeholder="https://www.youtube.com/embed/..."
+                      placeholder={
+                        lessonForm.type === 'audio_summary'
+                          ? 'https://example.com/audio.mp3'
+                          : 'https://www.youtube.com/embed/...'
+                      }
                       className="bg-card border-border text-foreground"
                     />
                   </div>
@@ -1908,6 +1916,7 @@ const handleUpdatePdf = async () => {
                     >
                       <option value="explanation">شرح (فيديو تعليمي)</option>
                       <option value="practice">تمرين (حل أسئلة)</option>
+                      <option value="audio_summary">ملخص صوتى (تسجيل صوتي)</option>
                     </select>
                   </div>
                   <div className="lg:col-span-2">
@@ -2057,7 +2066,11 @@ const handleUpdatePdf = async () => {
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2">
-                    <label className="text-sm font-medium mb-2 block">رابط الفيديو</label>
+                    <label className="text-sm font-medium mb-2 block">
+                      {editingLesson.type === 'audio_summary'
+                        ? 'رابط التسجيل الصوتي (MP3)'
+                        : 'رابط الفيديو'}
+                    </label>
                     <Input
                       value={editingLesson.videoUrl}
                       onChange={(e) =>
@@ -2087,6 +2100,7 @@ const handleUpdatePdf = async () => {
                     >
                       <option value="explanation">شرح (فيديو تعليمي)</option>
                       <option value="practice">تمرين (حل أسئلة)</option>
+                      <option value="audio_summary">ملخص صوتى (تسجيل صوتي)</option>
                     </select>
                   </div>
                   <div className="lg:col-span-2">

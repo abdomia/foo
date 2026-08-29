@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { VideoPlayer } from '@/components/video/VideoPlayer';
+import AudioPlayer from '@/components/audio/AudioPlayer';
 import { useAuth } from '@/components/AuthProvider';
 import FavoriteButton from '@/components/FavoriteButton';
 import {
@@ -236,7 +237,11 @@ export default function LessonPage({ params }: { params: Promise<{ id: string }>
           </Card>
         )}
 
-        {lesson.videoUrl && (
+        {lesson.videoUrl && lesson.type === 'audio_summary' && (
+          <AudioPlayer audioUrl={lesson.videoUrl} title={lesson.title} />
+        )}
+
+        {lesson.videoUrl && lesson.type !== 'audio_summary' && (
           <VideoPlayer
             videoUrl={lesson.videoUrl}
             lessonId={lesson.id}

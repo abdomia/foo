@@ -6,7 +6,7 @@ export interface Lesson {
   duration: string;
   completed: boolean;
   topicId: string;
-  type?: 'explanation' | 'practice';
+  type?: 'explanation' | 'practice' | 'audio_summary';
   locked?: boolean;
 }
 
