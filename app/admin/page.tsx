@@ -14,6 +14,7 @@ import QuestionBankSection from '@/components/admin/QuestionBankSection';
 import GenerateQuizModal from '@/components/admin/GenerateQuizModal';
 import DashboardOverview from '@/components/admin/DashboardOverview';
 import { CLASS_OPTIONS, getClassByKey } from '@/lib/classes';
+import { cn } from '@/lib/utils';
 import {
   Video,
   Plus,
@@ -40,6 +41,7 @@ import {
   Send,
   LayoutDashboard,
   BarChart3,
+  Brain,
 } from 'lucide-react';
 
 
@@ -660,7 +662,16 @@ const handleUpdatePdf = async () => {
 
   function SettingsTab() {
     const [settings, setSettings] = useState({ landingVideoUrl: 'k3sRZvSlBNE', teacherName: '', maxDevices: 3 });
+    const [aiSettings, setAiSettings] = useState({
+      aiEnabled: true,
+      aiDailyLimit: 30,
+      aiAllowImages: true,
+      aiAllowWebSearch: true,
+      aiAllowYouTube: true,
+    });
     const [saving, setSaving] = useState(false);
+    const [savingAi, setSavingAi] = useState(false);
+    const [aiSettingsMessage, setAiSettingsMessage] = useState('');
     const [settingsMessage, setSettingsMessage] = useState('');
     const [announcementTitle, setAnnouncementTitle] = useState('');
     const [announcementMessage, setAnnouncementMessage] = useState('');
@@ -708,6 +719,31 @@ const handleUpdatePdf = async () => {
         if (data.success) setSettings(data.data);
       }).catch(() => {});
     }, []);
+
+    useEffect(() => {
+      fetch('/api/admin/ai-settings').then(r => r.json()).then(data => {
+        if (data.success) setAiSettings(data.data);
+      }).catch(() => {});
+    }, []);
+
+    const saveAiSettings = async () => {
+      setSavingAi(true);
+      setAiSettingsMessage('');
+      try {
+        const res = await fetch('/api/admin/ai-settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(aiSettings),
+        });
+        const data = await res.json();
+        setAiSettingsMessage(data.success ? 'تم حفظ إعدادات الذكاء الاصطناعي' : (data.error || 'فشل الحفظ'));
+      } catch {
+        setAiSettingsMessage('فشل الحفظ');
+      } finally {
+        setSavingAi(false);
+        setTimeout(() => setAiSettingsMessage(''), 3000);
+      }
+    };
 
     const saveSettings = async () => {
       setSaving(true);
@@ -787,6 +823,91 @@ const handleUpdatePdf = async () => {
               <>
                 <Save className="w-4 h-4" />
                 حفظ الإعدادات
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary" />
+            إعدادات الذكاء الاصطناعي 🧠
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-xl border border-border p-3">
+            <div>
+              <p className="font-medium text-sm text-text-primary">تشغيل المساعد الذكي</p>
+              <p className="text-xs text-text-secondary">تفعيل «مساعد مستر عبدالرحمن ناصر» للطلاب</p>
+            </div>
+            <button
+              onClick={() => setAiSettings({ ...aiSettings, aiEnabled: !aiSettings.aiEnabled })}
+              className={cn(
+                'w-12 h-6 rounded-full p-0.5 transition-colors flex items-center',
+                aiSettings.aiEnabled ? 'bg-success justify-end' : 'bg-muted justify-start'
+              )}
+            >
+              <div className="w-5 h-5 rounded-full bg-white shadow" />
+            </button>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">الحد اليومي للرسائل لكل طالب</label>
+            <Input
+              type="number"
+              min={1}
+              max={500}
+              value={aiSettings.aiDailyLimit}
+              onChange={(e) => setAiSettings({ ...aiSettings, aiDailyLimit: Number(e.target.value) || 30 })}
+              className="bg-card border-border text-foreground max-w-xs"
+            />
+          </div>
+
+          {[
+            { key: 'aiAllowImages' as const, title: 'السماح برفع الصور', desc: 'حل مسائل من الصور المرفوعة' },
+            { key: 'aiAllowWebSearch' as const, title: 'السماح بالبحث على الإنترنت', desc: 'البحث عن حلول وشروحات إضافية' },
+            { key: 'aiAllowYouTube' as const, title: 'السماح بالبحث في يوتيوب', desc: 'شروحات إضافية من يوتيوب' },
+          ].map((opt) => (
+            <div key={opt.key} className="flex items-center justify-between rounded-xl border border-border p-3">
+              <div>
+                <p className="font-medium text-sm text-text-primary">{opt.title}</p>
+                <p className="text-xs text-text-secondary">{opt.desc}</p>
+              </div>
+              <button
+                onClick={() => setAiSettings({ ...aiSettings, [opt.key]: !aiSettings[opt.key] })}
+                className={cn(
+                  'w-12 h-6 rounded-full p-0.5 transition-colors flex items-center',
+                  aiSettings[opt.key] ? 'bg-success justify-end' : 'bg-muted justify-start'
+                )}
+              >
+                <div className="w-5 h-5 rounded-full bg-white shadow" />
+              </button>
+            </div>
+          ))}
+
+          <div className="text-xs text-text-secondary rounded-lg bg-muted/50 p-3">
+            مزوّد الذكاء الاصطناعي والنموذج يتم ضبطهما من خلال المتغيرات البيئية
+            (AI_API_KEY / AI_BASE_URL / AI_MODEL) في ملف .env
+          </div>
+
+          {aiSettingsMessage && (
+            <div className={`text-sm rounded-lg p-3 ${aiSettingsMessage.includes('نجاح') ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
+              {aiSettingsMessage}
+            </div>
+          )}
+
+          <Button onClick={saveAiSettings} disabled={savingAi} className="gap-2">
+            {savingAi ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                جاري الحفظ...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                حفظ إعدادات الذكاء الاصطناعي
               </>
             )}
           </Button>

@@ -28,6 +28,7 @@ import {
   Users,
   Activity,
   Sparkles,
+  Brain,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
@@ -42,6 +43,7 @@ const navItems = [
   { href: '/certificates', label: 'شهاداتي', icon: Award },
   { href: '/report', label: 'تقريري', icon: Activity },
   { href: '/study-plans', label: 'خطتي الذكية', icon: Sparkles },
+  { href: '/assistant', label: 'مساعد مستر عبدالرحمن ناصر', icon: Brain },
   { href: '/advice', label: 'نصائحي لك', icon: Lightbulb },
 ];
 

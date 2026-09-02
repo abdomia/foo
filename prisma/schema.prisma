@@ -44,6 +44,7 @@ model User {
   badges             Badge[]
   certificates       Certificate[]
   studyPlans         StudyPlan[]
+  conversations      Conversation[]
 
   @@index([role, createdAt])
   @@index([lastActiveDate])
@@ -150,6 +151,11 @@ model SiteSetting {
   landingVideoUrl String @default("k3sRZvSlBNE")
   teacherName     String @default("منصة الرائد")
   maxDevices      Int    @default(3)
+  aiEnabled       Boolean @default(true)
+  aiDailyLimit    Int     @default(30)
+  aiAllowImages   Boolean @default(true)
+  aiAllowWebSearch Boolean @default(true)
+  aiAllowYouTube  Boolean @default(true)
 }
 
 model Topic {
@@ -425,4 +431,32 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId])
+}
+
+// 🧠 مساعد مستر عبدالرحمن ناصر — AI conversations & history
+model Conversation {
+  id           String                @id @default(cuid())
+  userId       String
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String                @default("محادثة جديدة")
+  subject      String?               // math | statistics | general
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
+  messages     ConversationMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model ConversationMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // user | assistant
+  content        String
+  contentType    String       @default("text") // text | quiz | image
+  imageData      String?      // base64 data URL (user) — stored separately from content
+  feedback       String?      // 👍 | 👎 | null
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
 }
