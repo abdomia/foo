@@ -23,6 +23,8 @@ declare global {
         element: HTMLElement | string,
         options: {
           videoId: string;
+          width?: number | string;
+          height?: number | string;
           playerVars?: Record<string, unknown>;
           events?: Record<string, (e: unknown) => void>;
         }
@@ -172,6 +174,10 @@ export function VideoPlayer({
       try {
         playerRef.current = new window.YT.Player(mountNode, {
           videoId,
+          // Without these the iframe API falls back to its 640×390 default and
+          // the video no longer fills the 16:9 frame.
+          width: '100%',
+          height: '100%',
           playerVars: {
             modestbranding: 1,
             rel: 0,
@@ -182,6 +188,9 @@ export function VideoPlayer({
           events: {
             onReady: (e: unknown) => {
               lastReportRef.current = Date.now();
+              // The API player is up: drop the plain-iframe fallback if the
+              // load timer already swapped it in.
+              setApiFailed(false);
               const player = e as { target?: YTPlayerInstance };
               const initialStart = Math.floor(startSecondsRef.current || 0);
               if (initialStart > 0 && player.target?.seekTo) {
@@ -345,7 +354,9 @@ export function VideoPlayer({
       >
         <div
           ref={containerRef}
-          className={`w-full h-full absolute inset-0 ${apiFailed ? 'hidden' : ''}`}
+          className={`w-full h-full absolute inset-0 [&>iframe]:absolute [&>iframe]:inset-0 [&>iframe]:w-full [&>iframe]:h-full [&>iframe]:border-0 ${
+            apiFailed ? 'hidden' : ''
+          }`}
         />
 
         {apiFailed && (
@@ -369,7 +380,7 @@ export function VideoPlayer({
         />
 
         <motion.div
-          className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full max-w-[80%]"
+          className="absolute top-4 left-4 bg-black/50 backdrop-blur-md px-4 py-2 rounded-full max-w-[80%] pointer-events-none"
           initial={{ x: -50, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
