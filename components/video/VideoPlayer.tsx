@@ -38,8 +38,32 @@ declare global {
 interface YTPlayerInstance {
   getCurrentTime: () => number;
   getDuration: () => number;
+  getIframe?: () => HTMLIFrameElement;
   seekTo?: (seconds: number, allowSeekAhead: boolean) => void;
   destroy?: () => void;
+}
+
+/**
+ * The iframe API writes its own sizing on the <iframe> it injects (inline
+ * width/height attributes, sometimes inline styles). Force it to stretch to
+ * the 16:9 box so the video never renders as a small player floating in a big
+ * black frame.
+ */
+function fitPlayerToContainer(player: YTPlayerInstance | null | undefined) {
+  if (!player) return;
+  let frame: HTMLIFrameElement | null = null;
+  try {
+    frame = player.getIframe?.() ?? null;
+  } catch {
+    frame = null;
+  }
+  if (!frame) return;
+  frame.style.setProperty('position', 'absolute', 'important');
+  frame.style.setProperty('top', '0', 'important');
+  frame.style.setProperty('left', '0', 'important');
+  frame.style.setProperty('width', '100%', 'important');
+  frame.style.setProperty('height', '100%', 'important');
+  frame.style.setProperty('border', '0', 'important');
 }
 
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{6,20}$/;
@@ -192,6 +216,7 @@ export function VideoPlayer({
               // load timer already swapped it in.
               setApiFailed(false);
               const player = e as { target?: YTPlayerInstance };
+              fitPlayerToContainer(player.target);
               const initialStart = Math.floor(startSecondsRef.current || 0);
               if (initialStart > 0 && player.target?.seekTo) {
                 try {
@@ -209,6 +234,9 @@ export function VideoPlayer({
             },
           },
         });
+        // If the iframe already exists at this point, size it right away so the
+        // very first paint is full-width instead of the 640×390 default.
+        fitPlayerToContainer(playerRef.current);
       } catch (err) {
         // Never let a bad/blocked video take down the whole page.
         console.error('Failed to initialise YouTube player:', err);
