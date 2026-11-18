@@ -149,7 +149,7 @@ export function Sidebar() {
                 <div>
                   <h1 className="font-bold text-lg text-text-primary">الرائد</h1>
                   <p className="text-xs text-text-secondary">
-                    {getClassByKey(user?.grade)?.name || 'كل الصفوف'}
+                    {getClassByKey(user?.grade)?.short || 'كل الصفوف'}
                   </p>
                 </div>
               </Link>

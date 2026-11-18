@@ -172,7 +172,8 @@ export function ProgressContent() {
   const fetchTopics = async () => {
     if (!user?.id) return;
     try {
-      const res = await fetch('/api/admin/topics');
+      const gradeParam = user?.grade ? `?grade=${encodeURIComponent(user.grade)}` : '';
+      const res = await fetch(`/api/admin/topics${gradeParam}`);
       const data = await res.json();
       if (data.success) {
         const topicsWithProgress = await Promise.all(data.data.map(async (topic: Topic) => {
@@ -512,65 +513,7 @@ export function ProgressContent() {
         </Card>
       </motion.div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <h2 className="font-bold text-lg text-text-primary">إحصائيات المواضيع</h2>
-                <Badge variant="secondary">{topics.length} مواضيع</Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {topicsLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="space-y-2">
-                      <div className="h-4 bg-muted rounded animate-pulse w-1/3" />
-                      <div className="h-2 bg-muted rounded animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : topics.length === 0 ? (
-                <p className="text-text-secondary text-center py-4">لا توجد مواضيع</p>
-              ) : (
-                <div className="space-y-4">
-                  {topics.map((topic, idx) => {
-                    const topicLessons = topic.lessons.length;
-                    const completed = topic.lessons.filter(l => l.completed).length;
-                    return (
-                      <motion.div
-                        key={topic.id}
-                        className="space-y-2"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 + idx * 0.1 }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-text-primary">{topic.title}</span>
-                          <span className="text-sm text-text-secondary">
-                            {completed} / {topicLessons}
-                          </span>
-                        </div>
-                        <ProgressBar
-                          value={(completed / topicLessons) * 100}
-                          size="sm"
-                          color={completed === topicLessons ? 'success' : 'primary'}
-                        />
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
+      <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
@@ -750,9 +693,8 @@ export function ProgressContent() {
             </CardContent>
           </Card>
         </motion.div>
-      </div>
 
-      <motion.div
+       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}

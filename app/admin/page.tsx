@@ -1314,8 +1314,8 @@ const handleUpdatePdf = async () => {
                   <p>لا توجد مواضيع حالياً</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredTopics.map((topic) => (
+              <div className="grid grid-cols-1 gap-4">
+                   {filteredTopics.map((topic) => (
                     <div
                       key={topic.id}
                       className="border border-border rounded-2xl overflow-hidden bg-card shadow-sm hover:shadow-md transition-shadow"
@@ -1830,7 +1830,7 @@ const handleUpdatePdf = async () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
+                <label className="text-sm font-medium mb-2 block">السنة الراسية</label>
                 <select
                   value={topicForm.grade}
                   onChange={(e) =>
@@ -1897,7 +1897,7 @@ const handleUpdatePdf = async () => {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
+                <label className="text-sm font-medium mb-2 block">السنة الراسية</label>
                 <select
                   value={editingTopic.grade || ''}
                   onChange={(e) =>
@@ -2412,7 +2412,7 @@ const handleUpdatePdf = async () => {
               )}
             </div>
               <div>
-                <label className="text-sm font-medium mb-2 block">السنة الدراسية</label>
+                <label className="text-sm font-medium mb-2 block">السنة الراسية</label>
                 <select
                   value={pdfForm.grade}
                   onChange={(e) => setPdfForm({ ...pdfForm, grade: e.target.value })}

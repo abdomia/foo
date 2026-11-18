@@ -12,18 +12,31 @@ export interface AiSettings {
   allowYouTube: boolean;
 }
 
+export const DEFAULT_AI_SETTINGS: AiSettings = {
+  enabled: true,
+  dailyLimit: 30,
+  allowImages: true,
+  allowWebSearch: true,
+  allowYouTube: true,
+};
+
 export async function getAiSettings(): Promise<AiSettings> {
-  let s = await prisma.siteSetting.findUnique({ where: { id: 'platform' } });
-  if (!s) {
-    s = await prisma.siteSetting.create({ data: { id: 'platform' } });
+  try {
+    let s = await prisma.siteSetting.findUnique({ where: { id: 'platform' } });
+    if (!s) {
+      s = await prisma.siteSetting.create({ data: { id: 'platform' } });
+    }
+    return {
+      enabled: s.aiEnabled,
+      dailyLimit: s.aiDailyLimit,
+      allowImages: s.aiAllowImages,
+      allowWebSearch: s.aiAllowWebSearch,
+      allowYouTube: s.aiAllowYouTube,
+    };
+  } catch {
+    // DB may not be migrated yet — fall back to defaults rather than crash.
+    return { ...DEFAULT_AI_SETTINGS };
   }
-  return {
-    enabled: s.aiEnabled,
-    dailyLimit: s.aiDailyLimit,
-    allowImages: s.aiAllowImages,
-    allowWebSearch: s.aiAllowWebSearch,
-    allowYouTube: s.aiAllowYouTube,
-  };
 }
 
 /** Platform content as context so the assistant grounds answers in الرائد first. */

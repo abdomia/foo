@@ -140,7 +140,7 @@ export default function ProfilePage() {
 
   if (!user) return null;
 
-  const classLabel = getClassByKey(user.grade)?.name ?? 'لم يحدد الصف';
+  const classLabel = getClassByKey(user.grade)?.short ?? 'لم يحدد الصف';
 
   const stats: { label: string; value: string; icon: typeof Zap }[] = [
     { label: 'نقاط الخبرة XP', value: String(gamification?.totalXp ?? 0), icon: Zap },
@@ -158,7 +158,7 @@ export default function ProfilePage() {
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-text-primary">الملف الشخصي</h1>
-            <p className="text-text-secondary mt-1">معلوماتك وإحصائيات تقدمك في المنصة</p>
+            <p className="text-text-secondary mt-1">معلوماتك وتقدمك في المنصة</p>
           </div>
           <Link href="/">
             <Badge variant="outline" className="gap-1 px-3 py-1.5">
@@ -246,7 +246,7 @@ export default function ProfilePage() {
 
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold text-lg text-text-primary">إحصائياتي</h2>
+            <h2 className="font-bold text-lg text-text-primary">الرائد</h2>
             {loading && <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />}
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
