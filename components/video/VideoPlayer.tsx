@@ -20,7 +20,7 @@ declare global {
   interface Window {
     YT?: {
       Player: new (
-        element: HTMLElement,
+        element: HTMLElement | string,
         options: {
           videoId: string;
           playerVars?: Record<string, unknown>;
@@ -36,15 +36,61 @@ declare global {
 interface YTPlayerInstance {
   getCurrentTime: () => number;
   getDuration: () => number;
+  seekTo?: (seconds: number, allowSeekAhead: boolean) => void;
+  destroy?: () => void;
 }
 
+const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{6,20}$/;
+
+function cleanYouTubeId(value: string | null | undefined): string | null {
+  if (!value) return null;
+  // `youtu.be/ID?si=...`, `watch?v=ID&t=...`, `embed/ID?start=...`
+  const id = value.split(/[?&#/]/)[0].trim();
+  return YOUTUBE_ID_PATTERN.test(id) ? id : null;
+}
+
+/**
+ * Accepts every common YouTube link shape and returns a validated video id:
+ *   https://www.youtube.com/watch?v=ID          https://youtu.be/ID
+ *   https://youtu.be/ID?si=SHARE_TOKEN          https://www.youtube.com/embed/ID
+ *   https://www.youtube.com/shorts/ID           https://www.youtube.com/live/ID
+ *   https://m.youtube.com/watch?v=ID&t=30s      https://music.youtube.com/watch?v=ID
+ * Returns null when no usable id can be found (caller shows a placeholder
+ * instead of handing an invalid id to the YouTube player, which throws).
+ */
 export function getYouTubeVideoId(url: string): string | null {
-  if (!url) return null;
-  if (url.includes('youtube.com/embed/')) {
-    return url.split('youtube.com/embed/')[1]?.split('?')[0];
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+
+  let parsed: URL | null = null;
+  try {
+    parsed = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
+  } catch {
+    parsed = null;
   }
-  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&]+)/);
-  return match ? match[1] : null;
+
+  if (parsed) {
+    const host = parsed.hostname.toLowerCase().replace(/^(www|m|music)\./, '');
+    const parts = parsed.pathname.split('/').filter(Boolean);
+
+    if (host === 'youtu.be') {
+      return cleanYouTubeId(parts[0]);
+    }
+
+    if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      if (parts[0] === 'watch') return cleanYouTubeId(parsed.searchParams.get('v'));
+      if (parts[0] === 'embed' || parts[0] === 'shorts' || parts[0] === 'live' || parts[0] === 'v') {
+        return cleanYouTubeId(parts[1]);
+      }
+    }
+  }
+
+  // Fallback for links without a protocol or with unusual formatting.
+  const match = trimmed.match(
+    /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{6,20})/
+  );
+  return match ? cleanYouTubeId(match[1]) : null;
 }
 
 export function VideoPlayer({
@@ -62,7 +108,18 @@ export function VideoPlayer({
   const [saved, setSaved] = useState(completed);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YTPlayerInstance | null>(null);
-  const lastReportRef = useRef<number>(0);
+  const lastReportRef = useRef<number>(Date.now());
+  const startSecondsRef = useRef<number>(startSeconds);
+
+  // Keep the latest callback without re-running effects on every parent render.
+  const onPositionSavedRef = useRef(onPositionSaved);
+  useEffect(() => {
+    onPositionSavedRef.current = onPositionSaved;
+  }, [onPositionSaved]);
+
+  useEffect(() => {
+    startSecondsRef.current = startSeconds;
+  }, [startSeconds]);
 
   useEffect(() => {
     setSaved(completed);
@@ -73,6 +130,8 @@ export function VideoPlayer({
   const savePosition = useCallback(
     async (watchSeconds: number, timeSpentSeconds: number, markComplete = false) => {
       if (!lessonId) return;
+      const safeWatch = Number.isFinite(watchSeconds) ? Math.max(0, Math.floor(watchSeconds)) : 0;
+      const safeSpent = Number.isFinite(timeSpentSeconds) ? Math.max(0, Math.floor(timeSpentSeconds)) : 0;
       try {
         await fetch('/api/user/lesson-progress', {
           method: 'POST',
@@ -80,47 +139,72 @@ export function VideoPlayer({
           body: JSON.stringify({
             lessonId,
             progress: markComplete ? 100 : 0,
-            watchSeconds: Math.floor(watchSeconds),
-            timeSpentSeconds: Math.floor(timeSpentSeconds),
+            watchSeconds: safeWatch,
+            timeSpentSeconds: safeSpent,
             completed: markComplete,
           }),
         });
-        onPositionSaved?.(Math.floor(watchSeconds));
       } catch (err) {
         console.error('Error saving progress:', err);
       }
+      onPositionSavedRef.current?.(safeWatch);
     },
-    [lessonId, onPositionSaved]
+    [lessonId]
   );
 
   useEffect(() => {
     if (!videoId) return;
+    const host = containerRef.current;
+    if (!host) return;
+
     let cancelled = false;
     let readyHandler: (() => void) | null = null;
+    // YouTube replaces this node with its <iframe>. It stays outside React's
+    // tree so React never tries to remove a DOM node the iframe API took over.
+    let mountNode: HTMLDivElement | null = null;
 
     const initPlayer = () => {
-      if (cancelled || !containerRef.current || !window.YT?.Player) return;
-      playerRef.current = new window.YT.Player(containerRef.current, {
-        videoId,
-        playerVars: {
-          modestbranding: 1,
-          rel: 0,
-          playsinline: 1,
-          start: startSeconds > 0 ? startSeconds : undefined,
-          autoplay: 0,
-        },
-        events: {
-          onReady: () => {
-            lastReportRef.current = Date.now();
+      if (cancelled || !host || !window.YT?.Player) return;
+      if (playerRef.current) return;
+      mountNode = document.createElement('div');
+      host.appendChild(mountNode);
+      const initial = Math.floor(startSecondsRef.current || 0);
+      try {
+        playerRef.current = new window.YT.Player(mountNode, {
+          videoId,
+          playerVars: {
+            modestbranding: 1,
+            rel: 0,
+            playsinline: 1,
+            start: initial > 0 ? initial : undefined,
+            autoplay: 0,
           },
-          onStateChange: (e: unknown) => {
-            const state = e as { data: number };
-            if (state?.data === 1) {
+          events: {
+            onReady: (e: unknown) => {
               lastReportRef.current = Date.now();
-            }
+              const player = e as { target?: YTPlayerInstance };
+              const initialStart = Math.floor(startSecondsRef.current || 0);
+              if (initialStart > 0 && player.target?.seekTo) {
+                try {
+                  player.target.seekTo(initialStart, true);
+                } catch {
+                  // Seeking is best-effort.
+                }
+              }
+            },
+            onStateChange: (e: unknown) => {
+              const state = e as { data?: number };
+              if (state?.data === 1) {
+                lastReportRef.current = Date.now();
+              }
+            },
           },
-        },
-      });
+        });
+      } catch (err) {
+        // Never let a bad/blocked video take down the whole page.
+        console.error('Failed to initialise YouTube player:', err);
+        setApiFailed(true);
+      }
     };
 
     if (window.YT?.Player) {
@@ -146,8 +230,17 @@ export function VideoPlayer({
       if (readyHandler && window.onYouTubeIframeAPIReady === readyHandler) {
         delete window.onYouTubeIframeAPIReady;
       }
+      const player = playerRef.current;
+      playerRef.current = null;
+      try {
+        player?.destroy?.();
+      } catch {
+        // Ignore teardown errors from the iframe API.
+      }
+      mountNode?.remove();
+      mountNode = null;
     };
-  }, [videoId, startSeconds]);
+  }, [videoId]);
 
   useEffect(() => {
     if (!videoId) return;
@@ -184,6 +277,7 @@ export function VideoPlayer({
       }
       const now = Date.now();
       const delta = Math.min(30, Math.max(0, Math.floor((now - lastReportRef.current) / 1000)));
+      lastReportRef.current = now;
       if (delta > 0) {
         savePosition(ct, delta, false);
       }
@@ -235,8 +329,8 @@ export function VideoPlayer({
     );
   }
 
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?modestbranding=1&rel=0&playsinline=1${
-    apiFailed && startSeconds > 0 ? `&start=${startSeconds}` : ''
+  const embedUrl = `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?modestbranding=1&rel=0&playsinline=1${
+    startSeconds > 0 ? `&start=${Math.floor(startSeconds)}` : ''
   }`;
 
   return (
@@ -249,7 +343,12 @@ export function VideoPlayer({
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {apiFailed ? (
+        <div
+          ref={containerRef}
+          className={`w-full h-full absolute inset-0 ${apiFailed ? 'hidden' : ''}`}
+        />
+
+        {apiFailed && (
           <motion.iframe
             key="fallback"
             src={embedUrl}
@@ -261,8 +360,6 @@ export function VideoPlayer({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
           />
-        ) : (
-          <div ref={containerRef} className="w-full h-full absolute inset-0" />
         )}
 
         <motion.div
